@@ -16,16 +16,58 @@ export interface AutodartsState {
   throws: DartThrow[];
 }
 
-export interface ThrowRecord {
+// --- Around The World ---
+
+export interface ATWThrowRecord {
   target: number;
   segment: Segment;
   hit: boolean;
 }
 
+export type ATWPhase = "playing" | "complete";
+
+export interface ATWState {
+  phase: ATWPhase;
+  currentTargetIndex: number;
+  throwCount: number;
+  history: ATWThrowRecord[];
+}
+
+// --- X01 ---
+
+export interface X01Config {
+  baseScore: 301 | 501 | 701;
+  outMode: "double" | "straight";
+}
+
+export interface X01ThrowRecord {
+  segment: Segment;
+  points: number;
+  busted: boolean;
+}
+
+export type X01Phase = "playing" | "complete";
+
+export interface X01State {
+  phase: X01Phase;
+  targetScore: number;
+  outMode: "double" | "straight";
+  score: number;
+  scoreAtVisitStart: number;
+  currentVisit: X01ThrowRecord[];
+  throwCount: number;
+  visits: X01ThrowRecord[][];
+  busted: boolean;
+}
+
+// --- Player ---
+
 export interface Player {
   id: string;
   name: string;
 }
+
+// --- Game registry ---
 
 export interface GameDefinition {
   id: string;
@@ -33,18 +75,15 @@ export interface GameDefinition {
   description: string;
   minPlayers: number;
   maxPlayers: number;
+  hasConfig: boolean;
 }
+
+// --- Navigation ---
+
+export type GameConfig = Record<string, unknown>;
 
 export type AppView =
   | { screen: "home" }
-  | { screen: "player-select"; gameId: string }
-  | { screen: "playing"; gameId: string; playerIds: string[] };
-
-export type GamePhase = "playing" | "complete";
-
-export interface GameState {
-  phase: GamePhase;
-  currentTargetIndex: number;
-  throwCount: number;
-  history: ThrowRecord[];
-}
+  | { screen: "game-config"; gameId: string }
+  | { screen: "player-select"; gameId: string; config: GameConfig }
+  | { screen: "playing"; gameId: string; playerIds: string[]; config: GameConfig };

@@ -1,13 +1,13 @@
 "use client";
 
-import type { ThrowRecord } from "@/lib/types";
+import type { ATWThrowRecord } from "@/lib/types";
 
 interface ThrowHistoryProps {
-  history: ThrowRecord[];
+  history: ATWThrowRecord[];
   throwCount: number;
 }
 
-function ThrowBadge({ record }: { record: ThrowRecord }) {
+function ThrowBadge({ record }: { record: ATWThrowRecord }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm font-medium ${
@@ -26,7 +26,7 @@ export function ThrowHistory({ history, throwCount }: ThrowHistoryProps) {
   const accuracy = throwCount > 0 ? Math.round((hits / throwCount) * 100) : 0;
 
   // Group throws into rounds of 3
-  const rounds: ThrowRecord[][] = [];
+  const rounds: ATWThrowRecord[][] = [];
   for (let i = 0; i < history.length; i += 3) {
     rounds.push(history.slice(i, i + 3));
   }

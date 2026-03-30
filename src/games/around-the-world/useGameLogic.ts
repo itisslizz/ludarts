@@ -2,27 +2,27 @@
 
 import { useReducer, useCallback } from "react";
 import { SEQUENCE } from "@/lib/constants";
-import type { GameState, Segment, ThrowRecord } from "@/lib/types";
+import type { ATWState, Segment, ATWThrowRecord } from "@/lib/types";
 
 type Action =
   | { type: "REGISTER_THROW"; segment: Segment }
   | { type: "RESET" };
 
-const playingState: GameState = {
+const initialState: ATWState = {
   phase: "playing",
   currentTargetIndex: 0,
   throwCount: 0,
   history: [],
 };
 
-function reducer(state: GameState, action: Action): GameState {
+function reducer(state: ATWState, action: Action): ATWState {
   switch (action.type) {
     case "REGISTER_THROW": {
       if (state.phase !== "playing") return state;
 
       const currentTarget = SEQUENCE[state.currentTargetIndex];
       const hit = action.segment.number === currentTarget;
-      const record: ThrowRecord = {
+      const record: ATWThrowRecord = {
         target: currentTarget,
         segment: action.segment,
         hit,
@@ -43,15 +43,15 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case "RESET":
-      return playingState;
+      return initialState;
 
     default:
       return state;
   }
 }
 
-export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, playingState);
+export function useATWGameLogic() {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const registerThrow = useCallback(
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),

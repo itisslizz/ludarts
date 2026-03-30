@@ -7,6 +7,15 @@ export const GAMES: GameDefinition[] = [
     description: "Hit 1 through 20, then Bullseye",
     minPlayers: 1,
     maxPlayers: 1,
+    hasConfig: false,
+  },
+  {
+    id: "x01",
+    name: "X01",
+    description: "301, 501, or 701 — count down to zero",
+    minPlayers: 1,
+    maxPlayers: 1,
+    hasConfig: true,
   },
 ];
 

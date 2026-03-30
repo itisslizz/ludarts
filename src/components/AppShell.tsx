@@ -5,12 +5,14 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useAutodartsPoller } from "@/hooks/useAutodartsPoller";
 import { BoardControls } from "@/components/BoardControls";
 import { HomeScreen } from "@/components/HomeScreen";
+import { GameConfigScreen } from "@/components/GameConfigScreen";
 import { PlayerSelectScreen } from "@/components/PlayerSelectScreen";
 import { GameScreen } from "@/components/GameScreen";
 import type { Segment } from "@/lib/types";
 
 export function AppShell() {
-  const { view, goHome, selectGame, startGame } = useAppNavigation();
+  const { view, goHome, selectGame, configureGame, startGame } =
+    useAppNavigation();
 
   const throwHandlerRef = useRef<((segment: Segment) => void) | null>(null);
 
@@ -23,11 +25,6 @@ export function AppShell() {
     onThrowDetected: handleThrow,
   });
 
-  function handleStartGame(gameId: string, playerIds: string[]) {
-    resetTracking();
-    startGame(gameId, playerIds);
-  }
-
   return (
     <div className="flex min-h-full flex-col">
       <header className="flex items-center justify-center border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
@@ -39,10 +36,20 @@ export function AppShell() {
           <HomeScreen onSelectGame={selectGame} />
         )}
 
+        {view.screen === "game-config" && (
+          <GameConfigScreen
+            gameId={view.gameId}
+            onContinue={(config) => configureGame(view.gameId, config)}
+            onBack={goHome}
+          />
+        )}
+
         {view.screen === "player-select" && (
           <PlayerSelectScreen
             gameId={view.gameId}
-            onStart={(playerIds) => handleStartGame(view.gameId, playerIds)}
+            onStart={(playerIds) =>
+              startGame(view.gameId, playerIds, view.config)
+            }
             onBack={goHome}
           />
         )}
@@ -51,6 +58,7 @@ export function AppShell() {
           <GameScreen
             gameId={view.gameId}
             playerIds={view.playerIds}
+            config={view.config}
             onThrowDetected={(handler) => {
               throwHandlerRef.current = handler;
             }}
