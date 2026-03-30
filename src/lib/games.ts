@@ -14,7 +14,7 @@ export const GAMES: GameDefinition[] = [
     name: "X01",
     description: "301, 501, or 701 — count down to zero",
     minPlayers: 1,
-    maxPlayers: 1,
+    maxPlayers: 6,
     hasConfig: true,
   },
 ];

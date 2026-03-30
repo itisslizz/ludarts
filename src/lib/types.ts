@@ -46,18 +46,26 @@ export interface X01ThrowRecord {
   busted: boolean;
 }
 
+export interface X01PlayerState {
+  playerId: string;
+  score: number;
+  scoreAtVisitStart: number;
+  visits: X01ThrowRecord[][];
+}
+
 export type X01Phase = "playing" | "complete";
 
 export interface X01State {
   phase: X01Phase;
   targetScore: number;
   outMode: "double" | "straight";
-  score: number;
-  scoreAtVisitStart: number;
+  playerIds: string[];
+  players: X01PlayerState[];
+  currentPlayerIndex: number;
   currentVisit: X01ThrowRecord[];
   throwCount: number;
-  visits: X01ThrowRecord[][];
   busted: boolean;
+  winnerId: string | null;
 }
 
 // --- Player ---

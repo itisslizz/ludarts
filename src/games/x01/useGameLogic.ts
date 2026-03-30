@@ -1,23 +1,39 @@
 "use client";
 
 import { useReducer, useCallback } from "react";
-import type { X01State, X01Config, Segment, X01ThrowRecord } from "@/lib/types";
+import type {
+  X01State,
+  X01Config,
+  Segment,
+  X01ThrowRecord,
+} from "@/lib/types";
+
+interface X01InitArgs {
+  config: X01Config;
+  playerIds: string[];
+}
 
 type Action =
   | { type: "REGISTER_THROW"; segment: Segment }
   | { type: "RESET" };
 
-function createInitialState(config: X01Config): X01State {
+function createInitialState({ config, playerIds }: X01InitArgs): X01State {
   return {
     phase: "playing",
     targetScore: config.baseScore,
     outMode: config.outMode,
-    score: config.baseScore,
-    scoreAtVisitStart: config.baseScore,
+    playerIds,
+    players: playerIds.map((id) => ({
+      playerId: id,
+      score: config.baseScore,
+      scoreAtVisitStart: config.baseScore,
+      visits: [],
+    })),
+    currentPlayerIndex: 0,
     currentVisit: [],
     throwCount: 0,
-    visits: [],
     busted: false,
+    winnerId: null,
   };
 }
 
@@ -34,13 +50,44 @@ function isBust(
   return false;
 }
 
+function advancePlayer(state: X01State, visit: X01ThrowRecord[]): X01State {
+  const cp = state.players[state.currentPlayerIndex];
+  const updatedPlayers = state.players.map((p, i) =>
+    i === state.currentPlayerIndex
+      ? { ...p, visits: [...p.visits, visit], scoreAtVisitStart: p.score }
+      : p,
+  );
+
+  // If busted, revert score
+  if (state.busted || visit.some((t) => t.busted)) {
+    updatedPlayers[state.currentPlayerIndex] = {
+      ...updatedPlayers[state.currentPlayerIndex],
+      score: cp.scoreAtVisitStart,
+      scoreAtVisitStart: cp.scoreAtVisitStart,
+    };
+  }
+
+  const nextPlayerIndex =
+    (state.currentPlayerIndex + 1) % state.playerIds.length;
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    currentPlayerIndex: nextPlayerIndex,
+    currentVisit: [],
+    busted: false,
+  };
+}
+
 function reducer(state: X01State, action: Action): X01State {
   switch (action.type) {
     case "REGISTER_THROW": {
       if (state.phase !== "playing") return state;
-      // If already busted this visit, ignore remaining throws
+
+      const cp = state.players[state.currentPlayerIndex];
+
+      // If already busted this visit, remaining throws are void
       if (state.busted) {
-        // Wait for visit to end (3 throws)
         const record: X01ThrowRecord = {
           segment: action.segment,
           points: 0,
@@ -49,21 +96,22 @@ function reducer(state: X01State, action: Action): X01State {
         const visit = [...state.currentVisit, record];
         const isVisitEnd = visit.length >= 3;
 
+        if (isVisitEnd) {
+          return advancePlayer(
+            { ...state, throwCount: state.throwCount + 1, currentVisit: visit },
+            visit,
+          );
+        }
+
         return {
           ...state,
           throwCount: state.throwCount + 1,
-          currentVisit: isVisitEnd ? [] : visit,
-          visits: isVisitEnd ? [...state.visits, visit] : state.visits,
-          busted: !isVisitEnd,
-          score: isVisitEnd ? state.scoreAtVisitStart : state.score,
-          scoreAtVisitStart: isVisitEnd
-            ? state.scoreAtVisitStart
-            : state.scoreAtVisitStart,
+          currentVisit: visit,
         };
       }
 
       const points = action.segment.number * action.segment.multiplier;
-      const newScore = state.score - points;
+      const newScore = cp.score - points;
       const busted = isBust(newScore, state.outMode, action.segment);
 
       const record: X01ThrowRecord = {
@@ -72,55 +120,74 @@ function reducer(state: X01State, action: Action): X01State {
         busted,
       };
 
-      if (busted) {
-        const visit = [...state.currentVisit, record];
-        const isVisitEnd = visit.length >= 3;
+      const visit = [...state.currentVisit, record];
 
-        return {
+      // Busted
+      if (busted) {
+        const isVisitEnd = visit.length >= 3;
+        const nextState = {
           ...state,
           throwCount: state.throwCount + 1,
-          currentVisit: isVisitEnd ? [] : visit,
-          visits: isVisitEnd ? [...state.visits, visit] : state.visits,
-          score: isVisitEnd ? state.scoreAtVisitStart : state.score,
-          scoreAtVisitStart: isVisitEnd
-            ? state.scoreAtVisitStart
-            : state.scoreAtVisitStart,
-          busted: !isVisitEnd,
+          currentVisit: visit,
+          busted: true,
         };
+
+        if (isVisitEnd) {
+          return advancePlayer(nextState, visit);
+        }
+        return nextState;
       }
 
-      // Valid throw
+      // Checked out — winner!
       if (newScore === 0) {
-        const visit = [...state.currentVisit, record];
+        const updatedPlayers = state.players.map((p, i) =>
+          i === state.currentPlayerIndex ? { ...p, score: 0, visits: [...p.visits, visit] } : p,
+        );
         return {
           ...state,
           phase: "complete",
-          score: 0,
+          players: updatedPlayers,
           throwCount: state.throwCount + 1,
           currentVisit: [],
-          visits: [...state.visits, visit],
           busted: false,
+          winnerId: cp.playerId,
         };
       }
 
-      const visit = [...state.currentVisit, record];
-      const isVisitEnd = visit.length >= 3;
+      // Valid throw, update player score
+      const updatedPlayers = state.players.map((p, i) =>
+        i === state.currentPlayerIndex ? { ...p, score: newScore } : p,
+      );
 
-      return {
+      const isVisitEnd = visit.length >= 3;
+      const nextState = {
         ...state,
-        score: newScore,
+        players: updatedPlayers,
         throwCount: state.throwCount + 1,
-        currentVisit: isVisitEnd ? [] : visit,
-        visits: isVisitEnd ? [...state.visits, visit] : state.visits,
-        scoreAtVisitStart: isVisitEnd ? newScore : state.scoreAtVisitStart,
+        currentVisit: visit,
         busted: false,
       };
+
+      if (isVisitEnd) {
+        // Lock in scoreAtVisitStart for the current player before advancing
+        nextState.players = nextState.players.map((p, i) =>
+          i === state.currentPlayerIndex
+            ? { ...p, scoreAtVisitStart: newScore }
+            : p,
+        );
+        return advancePlayer(nextState, visit);
+      }
+
+      return nextState;
     }
 
     case "RESET":
       return createInitialState({
-        baseScore: state.targetScore as 301 | 501 | 701,
-        outMode: state.outMode,
+        config: {
+          baseScore: state.targetScore as 301 | 501 | 701,
+          outMode: state.outMode,
+        },
+        playerIds: state.playerIds,
       });
 
     default:
@@ -128,12 +195,8 @@ function reducer(state: X01State, action: Action): X01State {
   }
 }
 
-export function useX01GameLogic(config: X01Config) {
-  const [state, dispatch] = useReducer(
-    reducer,
-    config,
-    createInitialState,
-  );
+export function useX01GameLogic(config: X01Config, playerIds: string[]) {
+  const [state, dispatch] = useReducer(reducer, { config, playerIds }, createInitialState);
 
   const registerThrow = useCallback(
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),

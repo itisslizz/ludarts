@@ -1,10 +1,12 @@
 "use client";
 
 import { useX01GameLogic } from "./useGameLogic";
+import { usePlayerStore } from "@/hooks/usePlayerStore";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
 
 interface X01GameViewProps {
   config: X01Config;
+  playerIds: string[];
   onThrowDetected: (handler: (segment: Segment) => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
@@ -27,9 +29,15 @@ function ThrowBadge({ record }: { record: X01ThrowRecord }) {
   );
 }
 
-function VisitHistory({ visits }: { visits: X01ThrowRecord[][] }) {
+function VisitHistory({
+  visits,
+  playerName,
+}: {
+  visits: X01ThrowRecord[][];
+  playerName?: string;
+}) {
   return (
-    <div className="flex w-full max-w-md flex-col gap-2 overflow-y-auto max-h-56">
+    <div className="flex w-full flex-col gap-1">
       {[...visits].reverse().map((visit, ri) => {
         const visitIndex = visits.length - 1 - ri;
         const visitTotal = visit.reduce((s, t) => s + t.points, 0);
@@ -38,11 +46,13 @@ function VisitHistory({ visits }: { visits: X01ThrowRecord[][] }) {
         return (
           <div
             key={visitIndex}
-            className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-2 dark:bg-zinc-900"
+            className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-900"
           >
-            <span className="w-6 text-xs font-medium text-zinc-400 dark:text-zinc-500">
-              R{visitIndex + 1}
-            </span>
+            {playerName && (
+              <span className="w-16 truncate text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                {playerName}
+              </span>
+            )}
             <div className="flex flex-1 gap-2">
               {visit.map((record, ti) => (
                 <ThrowBadge key={visitIndex * 3 + ti} record={record} />
@@ -66,24 +76,48 @@ function VisitHistory({ visits }: { visits: X01ThrowRecord[][] }) {
 
 export function X01GameView({
   config,
+  playerIds,
   onThrowDetected,
   onQuit,
   onPlayAgain,
 }: X01GameViewProps) {
-  const { state, registerThrow, reset } = useX01GameLogic(config);
+  const { state, registerThrow, reset } = useX01GameLogic(config, playerIds);
+  const { players: allPlayers } = usePlayerStore();
 
   onThrowDetected(registerThrow);
+
+  const playerName = (id: string) =>
+    allPlayers.find((p) => p.id === id)?.name ?? "Unknown";
 
   if (state.phase === "complete") {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold">Game Complete!</h1>
+          <h1 className="text-4xl font-bold">
+            {state.winnerId ? `${playerName(state.winnerId)} wins!` : "Game Complete!"}
+          </h1>
           <p className="mt-2 text-lg text-zinc-500 dark:text-zinc-400">
-            {state.targetScore} finished in {state.throwCount} darts
+            {state.targetScore} &middot; {state.throwCount} total darts
           </p>
         </div>
-        <VisitHistory visits={state.visits} />
+
+        {/* Final scores */}
+        <div className="flex w-full max-w-md flex-col gap-2">
+          {state.players.map((ps) => (
+            <div
+              key={ps.playerId}
+              className={`flex items-center justify-between rounded-lg px-4 py-3 ${
+                ps.playerId === state.winnerId
+                  ? "bg-green-500/10 border border-green-500"
+                  : "bg-zinc-100 dark:bg-zinc-900"
+              }`}
+            >
+              <span className="font-medium">{playerName(ps.playerId)}</span>
+              <span className="text-lg font-bold tabular-nums">{ps.score}</span>
+            </div>
+          ))}
+        </div>
+
         <div className="flex gap-4">
           <button
             onClick={onQuit}
@@ -105,7 +139,23 @@ export function X01GameView({
     );
   }
 
+  // Playing phase
+  const currentPlayer = state.players[state.currentPlayerIndex];
   const visitTotal = state.currentVisit.reduce((s, t) => s + t.points, 0);
+  const isMultiplayer = state.playerIds.length > 1;
+
+  // Interleave all visits for the combined history
+  const allVisits: { visit: X01ThrowRecord[]; playerId: string }[] = [];
+  if (isMultiplayer) {
+    const maxVisits = Math.max(...state.players.map((p) => p.visits.length));
+    for (let round = 0; round < maxVisits; round++) {
+      for (const ps of state.players) {
+        if (round < ps.visits.length) {
+          allVisits.push({ visit: ps.visits[round], playerId: ps.playerId });
+        }
+      }
+    }
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-6">
@@ -121,15 +171,34 @@ export function X01GameView({
         </p>
       </div>
 
-      {/* Score display */}
-      <div className="text-center">
-        <p className="text-6xl font-bold tabular-nums">{state.score}</p>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          remaining
-        </p>
+      {/* Scoreboard */}
+      <div className={`grid w-full max-w-md gap-2 ${
+        isMultiplayer ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1"
+      }`}>
+        {state.players.map((ps, i) => (
+          <div
+            key={ps.playerId}
+            className={`flex flex-col items-center rounded-lg px-4 py-3 ${
+              i === state.currentPlayerIndex
+                ? "bg-yellow-400/15 border-2 border-yellow-400"
+                : "bg-zinc-100 dark:bg-zinc-900"
+            }`}
+          >
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate w-full text-center">
+              {playerName(ps.playerId)}
+            </span>
+            <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
+          </div>
+        ))}
       </div>
 
-      {/* Current visit */}
+      {/* Current player & visit */}
+      {isMultiplayer && (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          {playerName(currentPlayer.playerId)}&apos;s turn
+        </p>
+      )}
+
       <div className="flex items-center gap-4">
         <div className="flex gap-2">
           {state.currentVisit.map((record, i) => (
@@ -153,7 +222,41 @@ export function X01GameView({
         ) : null}
       </div>
 
-      <VisitHistory visits={state.visits} />
+      {/* Visit history */}
+      <div className="w-full max-w-md overflow-y-auto max-h-48">
+        {isMultiplayer ? (
+          <div className="flex flex-col gap-1">
+            {[...allVisits].reverse().map((entry, i) => {
+              const visitTotal = entry.visit.reduce((s, t) => s + t.points, 0);
+              const busted = entry.visit.some((t) => t.busted);
+              return (
+                <div
+                  key={allVisits.length - 1 - i}
+                  className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-900"
+                >
+                  <span className="w-16 truncate text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                    {playerName(entry.playerId)}
+                  </span>
+                  <div className="flex flex-1 gap-2">
+                    {entry.visit.map((record, ti) => (
+                      <ThrowBadge key={ti} record={record} />
+                    ))}
+                  </div>
+                  <span
+                    className={`text-sm font-semibold ${
+                      busted ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    {busted ? "BUST" : visitTotal}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <VisitHistory visits={state.players[0].visits} />
+        )}
+      </div>
     </div>
   );
 }

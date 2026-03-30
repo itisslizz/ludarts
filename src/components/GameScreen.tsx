@@ -15,6 +15,7 @@ interface GameScreenProps {
 
 export function GameScreen({
   gameId,
+  playerIds,
   config,
   onThrowDetected,
   onQuit,
@@ -33,6 +34,7 @@ export function GameScreen({
       return (
         <X01GameView
           config={config as unknown as X01Config}
+          playerIds={playerIds}
           onThrowDetected={onThrowDetected}
           onQuit={onQuit}
           onPlayAgain={onPlayAgain}
