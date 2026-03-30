@@ -5,12 +5,11 @@ import { SEQUENCE } from "@/lib/constants";
 import type { GameState, Segment, ThrowRecord } from "@/lib/types";
 
 type Action =
-  | { type: "START_GAME" }
   | { type: "REGISTER_THROW"; segment: Segment }
   | { type: "RESET" };
 
-const initialState: GameState = {
-  phase: "idle",
+const playingState: GameState = {
+  phase: "playing",
   currentTargetIndex: 0,
   throwCount: 0,
   history: [],
@@ -18,9 +17,6 @@ const initialState: GameState = {
 
 function reducer(state: GameState, action: Action): GameState {
   switch (action.type) {
-    case "START_GAME":
-      return { ...initialState, phase: "playing" };
-
     case "REGISTER_THROW": {
       if (state.phase !== "playing") return state;
 
@@ -47,7 +43,7 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case "RESET":
-      return initialState;
+      return playingState;
 
     default:
       return state;
@@ -55,9 +51,8 @@ function reducer(state: GameState, action: Action): GameState {
 }
 
 export function useGameState() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(reducer, playingState);
 
-  const startGame = useCallback(() => dispatch({ type: "START_GAME" }), []);
   const registerThrow = useCallback(
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),
     [],
@@ -69,5 +64,5 @@ export function useGameState() {
       ? SEQUENCE[state.currentTargetIndex]
       : null;
 
-  return { state, currentTarget, startGame, registerThrow, reset };
+  return { state, currentTarget, registerThrow, reset };
 }

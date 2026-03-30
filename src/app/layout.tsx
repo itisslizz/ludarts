@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Around The World",
-  description: "Around The World darts game with Autodarts integration",
+  title: "Autodarts",
+  description: "Darts games with Autodarts board integration",
 };
 
 export default function RootLayout({

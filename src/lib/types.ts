@@ -22,7 +22,25 @@ export interface ThrowRecord {
   hit: boolean;
 }
 
-export type GamePhase = "idle" | "playing" | "complete";
+export interface Player {
+  id: string;
+  name: string;
+}
+
+export interface GameDefinition {
+  id: string;
+  name: string;
+  description: string;
+  minPlayers: number;
+  maxPlayers: number;
+}
+
+export type AppView =
+  | { screen: "home" }
+  | { screen: "player-select"; gameId: string }
+  | { screen: "playing"; gameId: string; playerIds: string[] };
+
+export type GamePhase = "playing" | "complete";
 
 export interface GameState {
   phase: GamePhase;
