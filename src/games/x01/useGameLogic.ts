@@ -15,6 +15,7 @@ interface X01InitArgs {
 
 type Action =
   | { type: "REGISTER_THROW"; segment: Segment }
+  | { type: "UNDO" }
   | { type: "RESET" };
 
 function createInitialState({ config, playerIds }: X01InitArgs): X01State {
@@ -181,6 +182,82 @@ function reducer(state: X01State, action: Action): X01State {
       return nextState;
     }
 
+    case "UNDO": {
+      if (state.throwCount === 0) return state;
+
+      // If there are throws in the current visit, undo the last one
+      if (state.currentVisit.length > 0) {
+        const lastThrow = state.currentVisit[state.currentVisit.length - 1];
+        const cp = state.players[state.currentPlayerIndex];
+
+        // Restore the player's score (add back the points if it wasn't busted)
+        const restoredScore = lastThrow.busted ? cp.score : cp.score + lastThrow.points;
+
+        // Check if we're un-busting: if the remaining visit has no busted throws
+        const remainingVisit = state.currentVisit.slice(0, -1);
+        const stillBusted = remainingVisit.some((t) => t.busted);
+
+        return {
+          ...state,
+          phase: "playing",
+          players: state.players.map((p, i) =>
+            i === state.currentPlayerIndex ? { ...p, score: restoredScore } : p,
+          ),
+          currentVisit: remainingVisit,
+          throwCount: state.throwCount - 1,
+          busted: stillBusted,
+          winnerId: null,
+        };
+      }
+
+      // Current visit is empty — go back to previous player's last visit
+      const prevPlayerIndex =
+        (state.currentPlayerIndex - 1 + state.playerIds.length) %
+        state.playerIds.length;
+      const prevPlayer = state.players[prevPlayerIndex];
+
+      if (prevPlayer.visits.length === 0) return state;
+
+      const lastVisit = prevPlayer.visits[prevPlayer.visits.length - 1];
+      const lastThrow = lastVisit[lastVisit.length - 1];
+      const remainingVisit = lastVisit.slice(0, -1);
+
+      // Recalculate score: the scoreAtVisitStart was set when the visit ended
+      // We need to restore the score before the last throw
+      const visitWasBusted = lastVisit.some((t) => t.busted);
+      const restoredScore = visitWasBusted
+        ? prevPlayer.scoreAtVisitStart
+        : prevPlayer.score + lastThrow.points;
+
+      const stillBusted = remainingVisit.some((t) => t.busted);
+
+      // Restore the previous player's score to before that visit started
+      // and put the remaining throws back as their current visit
+      const prevScoreAtVisitStart = visitWasBusted
+        ? prevPlayer.scoreAtVisitStart
+        : prevPlayer.scoreAtVisitStart;
+
+      return {
+        ...state,
+        phase: "playing",
+        currentPlayerIndex: prevPlayerIndex,
+        players: state.players.map((p, i) =>
+          i === prevPlayerIndex
+            ? {
+                ...p,
+                score: restoredScore,
+                scoreAtVisitStart: prevScoreAtVisitStart,
+                visits: p.visits.slice(0, -1),
+              }
+            : p,
+        ),
+        currentVisit: remainingVisit,
+        throwCount: state.throwCount - 1,
+        busted: stillBusted,
+        winnerId: null,
+      };
+    }
+
     case "RESET":
       return createInitialState({
         config: {
@@ -202,7 +279,8 @@ export function useX01GameLogic(config: X01Config, playerIds: string[]) {
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),
     [],
   );
+  const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
-  return { state, registerThrow, reset };
+  return { state, registerThrow, undo, reset };
 }

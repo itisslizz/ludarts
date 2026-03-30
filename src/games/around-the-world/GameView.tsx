@@ -3,6 +3,7 @@
 import { useATWGameLogic } from "./useGameLogic";
 import { Dartboard } from "@/components/Dartboard";
 import { ThrowHistory } from "@/components/ThrowHistory";
+import { ScorePicker } from "@/components/ScorePicker";
 import { SEQUENCE } from "@/lib/constants";
 import type { Segment } from "@/lib/types";
 
@@ -17,7 +18,8 @@ export function ATWGameView({
   onQuit,
   onPlayAgain,
 }: ATWGameViewProps) {
-  const { state, currentTarget, registerThrow, reset } = useATWGameLogic();
+  const { state, currentTarget, registerThrow, undo, reset } =
+    useATWGameLogic();
 
   onThrowDetected(registerThrow);
 
@@ -60,7 +62,7 @@ export function ATWGameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-6">
-      <div className="flex w-full max-w-md items-center justify-between">
+      <div className="flex w-full max-w-3xl items-center justify-between">
         <button
           onClick={onQuit}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
@@ -77,6 +79,18 @@ export function ATWGameView({
       </h2>
 
       <Dartboard currentTarget={currentTarget} />
+
+      {/* Undo button */}
+      <button
+        onClick={undo}
+        disabled={state.throwCount === 0}
+        className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      >
+        Undo Last Throw
+      </button>
+
+      {/* Manual score entry */}
+      <ScorePicker onSelect={registerThrow} />
 
       <ThrowHistory history={state.history} throwCount={state.throwCount} />
     </div>

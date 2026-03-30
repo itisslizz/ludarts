@@ -2,6 +2,7 @@
 
 import { useX01GameLogic } from "./useGameLogic";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
+import { ScorePicker } from "@/components/ScorePicker";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
 
 interface X01GameViewProps {
@@ -81,7 +82,7 @@ export function X01GameView({
   onQuit,
   onPlayAgain,
 }: X01GameViewProps) {
-  const { state, registerThrow, reset } = useX01GameLogic(config, playerIds);
+  const { state, registerThrow, undo, reset } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
 
   onThrowDetected(registerThrow);
@@ -102,7 +103,7 @@ export function X01GameView({
         </div>
 
         {/* Final scores */}
-        <div className="flex w-full max-w-md flex-col gap-2">
+        <div className="flex w-full max-w-3xl flex-col gap-2">
           {state.players.map((ps) => (
             <div
               key={ps.playerId}
@@ -159,7 +160,7 @@ export function X01GameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-6">
-      <div className="flex w-full max-w-md items-center justify-between">
+      <div className="flex w-full max-w-3xl items-center justify-between">
         <button
           onClick={onQuit}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
@@ -172,24 +173,38 @@ export function X01GameView({
       </div>
 
       {/* Scoreboard */}
-      <div className={`grid w-full max-w-md gap-2 ${
+      <div className={`grid w-full max-w-3xl gap-2 ${
         isMultiplayer ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1"
       }`}>
-        {state.players.map((ps, i) => (
-          <div
-            key={ps.playerId}
-            className={`flex flex-col items-center rounded-lg px-4 py-3 ${
-              i === state.currentPlayerIndex
-                ? "bg-yellow-400/15 border-2 border-yellow-400"
-                : "bg-zinc-100 dark:bg-zinc-900"
-            }`}
-          >
-            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate w-full text-center">
-              {playerName(ps.playerId)}
-            </span>
-            <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
-          </div>
-        ))}
+        {state.players.map((ps, i) => {
+          const totalDarts = ps.visits.reduce((sum, v) => sum + v.length, 0);
+          const totalPoints = state.targetScore - ps.score;
+          const ppr = totalDarts > 0 ? (totalPoints / (totalDarts / 3)).toFixed(1) : "—";
+          const lastVisit = ps.visits.length > 0 ? ps.visits[ps.visits.length - 1] : null;
+          const lastVisitScore = lastVisit
+            ? lastVisit.reduce((sum, t) => sum + t.points, 0)
+            : null;
+
+          return (
+            <div
+              key={ps.playerId}
+              className={`flex flex-col items-center rounded-lg px-4 py-3 ${
+                i === state.currentPlayerIndex
+                  ? "bg-yellow-400/15 border-2 border-yellow-400"
+                  : "bg-zinc-100 dark:bg-zinc-900"
+              }`}
+            >
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate w-full text-center">
+                {playerName(ps.playerId)}
+              </span>
+              <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
+              <div className="flex gap-3 mt-1 text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">
+                <span>Last: {lastVisitScore !== null ? lastVisitScore : "—"}</span>
+                <span>PPR: {ppr}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Current player & visit */}
@@ -222,8 +237,20 @@ export function X01GameView({
         ) : null}
       </div>
 
+      {/* Undo button */}
+      <button
+        onClick={undo}
+        disabled={state.throwCount === 0}
+        className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+      >
+        Undo Last Throw
+      </button>
+
+      {/* Manual score entry */}
+      <ScorePicker onSelect={registerThrow} />
+
       {/* Visit history */}
-      <div className="w-full max-w-md overflow-y-auto max-h-48">
+      <div className="w-full max-w-3xl overflow-y-auto max-h-48">
         {isMultiplayer ? (
           <div className="flex flex-col gap-1">
             {[...allVisits].reverse().map((entry, i) => {
@@ -257,6 +284,7 @@ export function X01GameView({
           <VisitHistory visits={state.players[0].visits} />
         )}
       </div>
+
     </div>
   );
 }

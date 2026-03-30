@@ -17,7 +17,7 @@ function X01Config({
   onContinue: (config: GameConfig) => void;
   onBack: () => void;
 }) {
-  const [baseScore, setBaseScore] = useState<301 | 501 | 701>(501);
+  const [baseScore, setBaseScore] = useState<301 | 501 | 701>(301);
   const [outMode, setOutMode] = useState<"double" | "straight">("double");
 
   return (

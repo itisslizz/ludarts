@@ -32,7 +32,7 @@ export function ThrowHistory({ history, throwCount }: ThrowHistoryProps) {
   }
 
   return (
-    <div className="flex w-full max-w-md flex-col gap-3">
+    <div className="flex w-full max-w-3xl flex-col gap-3">
       <div className="flex gap-6 text-sm text-zinc-500 dark:text-zinc-400">
         <span>Throws: {throwCount}</span>
         <span>Hits: {hits}</span>

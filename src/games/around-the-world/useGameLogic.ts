@@ -6,6 +6,7 @@ import type { ATWState, Segment, ATWThrowRecord } from "@/lib/types";
 
 type Action =
   | { type: "REGISTER_THROW"; segment: Segment }
+  | { type: "UNDO" }
   | { type: "RESET" };
 
 const initialState: ATWState = {
@@ -42,6 +43,19 @@ function reducer(state: ATWState, action: Action): ATWState {
       };
     }
 
+    case "UNDO": {
+      if (state.history.length === 0) return state;
+      const lastRecord = state.history[state.history.length - 1];
+      return {
+        phase: "playing",
+        currentTargetIndex: lastRecord.hit
+          ? state.currentTargetIndex - 1
+          : state.currentTargetIndex,
+        throwCount: state.throwCount - 1,
+        history: state.history.slice(0, -1),
+      };
+    }
+
     case "RESET":
       return initialState;
 
@@ -57,6 +71,7 @@ export function useATWGameLogic() {
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),
     [],
   );
+  const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
   const currentTarget =
@@ -64,5 +79,5 @@ export function useATWGameLogic() {
       ? SEQUENCE[state.currentTargetIndex]
       : null;
 
-  return { state, currentTarget, registerThrow, reset };
+  return { state, currentTarget, registerThrow, undo, reset };
 }
