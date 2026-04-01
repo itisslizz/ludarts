@@ -15,6 +15,7 @@ interface X01InitArgs {
 
 type Action =
   | { type: "REGISTER_THROW"; segment: Segment }
+  | { type: "END_TURN" }
   | { type: "UNDO" }
   | { type: "RESET" };
 
@@ -87,30 +88,6 @@ function reducer(state: X01State, action: Action): X01State {
 
       const cp = state.players[state.currentPlayerIndex];
 
-      // If already busted this visit, remaining throws are void
-      if (state.busted) {
-        const record: X01ThrowRecord = {
-          segment: action.segment,
-          points: 0,
-          busted: true,
-        };
-        const visit = [...state.currentVisit, record];
-        const isVisitEnd = visit.length >= 3;
-
-        if (isVisitEnd) {
-          return advancePlayer(
-            { ...state, throwCount: state.throwCount + 1, currentVisit: visit },
-            visit,
-          );
-        }
-
-        return {
-          ...state,
-          throwCount: state.throwCount + 1,
-          currentVisit: visit,
-        };
-      }
-
       const points = action.segment.number * action.segment.multiplier;
       const newScore = cp.score - points;
       const busted = isBust(newScore, state.outMode, action.segment);
@@ -123,9 +100,8 @@ function reducer(state: X01State, action: Action): X01State {
 
       const visit = [...state.currentVisit, record];
 
-      // Busted
+      // Busted — turn ends immediately
       if (busted) {
-        const isVisitEnd = visit.length >= 3;
         const nextState = {
           ...state,
           throwCount: state.throwCount + 1,
@@ -133,10 +109,7 @@ function reducer(state: X01State, action: Action): X01State {
           busted: true,
         };
 
-        if (isVisitEnd) {
-          return advancePlayer(nextState, visit);
-        }
-        return nextState;
+        return advancePlayer(nextState, visit);
       }
 
       // Checked out — winner!
@@ -180,6 +153,22 @@ function reducer(state: X01State, action: Action): X01State {
       }
 
       return nextState;
+    }
+
+    case "END_TURN": {
+      if (state.phase !== "playing") return state;
+      if (state.currentVisit.length === 0) return state;
+
+      const visit = state.currentVisit;
+      const nextState = {
+        ...state,
+        players: state.players.map((p, i) =>
+          i === state.currentPlayerIndex
+            ? { ...p, scoreAtVisitStart: p.score }
+            : p,
+        ),
+      };
+      return advancePlayer(nextState, visit);
     }
 
     case "UNDO": {
@@ -279,8 +268,9 @@ export function useX01GameLogic(config: X01Config, playerIds: string[]) {
     (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),
     [],
   );
+  const endTurn = useCallback(() => dispatch({ type: "END_TURN" }), []);
   const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
-  return { state, registerThrow, undo, reset };
+  return { state, registerThrow, endTurn, undo, reset };
 }

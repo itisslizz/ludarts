@@ -15,14 +15,20 @@ export function AppShell() {
     useAppNavigation();
 
   const throwHandlerRef = useRef<((segment: Segment) => void) | null>(null);
+  const takeoutHandlerRef = useRef<(() => void) | null>(null);
 
   const handleThrow = useCallback((segment: Segment) => {
     throwHandlerRef.current?.(segment);
   }, []);
 
+  const handleTakeout = useCallback(() => {
+    takeoutHandlerRef.current?.();
+  }, []);
+
   const { boardRunning, resetTracking } = useAutodartsPoller({
     processThrows: view.screen === "playing",
     onThrowDetected: handleThrow,
+    onTakeout: handleTakeout,
   });
 
   return (
@@ -61,6 +67,9 @@ export function AppShell() {
             config={view.config}
             onThrowDetected={(handler) => {
               throwHandlerRef.current = handler;
+            }}
+            onTakeout={(handler) => {
+              takeoutHandlerRef.current = handler;
             }}
             onQuit={goHome}
             onPlayAgain={() => {

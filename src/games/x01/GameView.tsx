@@ -1,6 +1,7 @@
 "use client";
 
 import { useX01GameLogic } from "./useGameLogic";
+import { computeStats } from "./stats";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
@@ -9,6 +10,7 @@ interface X01GameViewProps {
   config: X01Config;
   playerIds: string[];
   onThrowDetected: (handler: (segment: Segment) => void) => void;
+  onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
 }
@@ -79,42 +81,94 @@ export function X01GameView({
   config,
   playerIds,
   onThrowDetected,
+  onTakeout,
   onQuit,
   onPlayAgain,
 }: X01GameViewProps) {
-  const { state, registerThrow, undo, reset } = useX01GameLogic(config, playerIds);
+  const { state, registerThrow, endTurn, undo, reset } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
 
   onThrowDetected(registerThrow);
+  onTakeout(endTurn);
 
   const playerName = (id: string) =>
     allPlayers.find((p) => p.id === id)?.name ?? "Unknown";
 
   if (state.phase === "complete") {
+    const playerStats = state.players.map((ps) => ({
+      ...ps,
+      stats: computeStats(ps, state.targetScore),
+      name: playerName(ps.playerId),
+      isWinner: ps.playerId === state.winnerId,
+    }));
+
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-8">
+      <div className="flex flex-1 flex-col items-center gap-8 py-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold">
             {state.winnerId ? `${playerName(state.winnerId)} wins!` : "Game Complete!"}
           </h1>
           <p className="mt-2 text-lg text-zinc-500 dark:text-zinc-400">
-            {state.targetScore} &middot; {state.throwCount} total darts
+            {state.targetScore} &middot; {state.outMode === "double" ? "Double Out" : "Straight Out"}
           </p>
         </div>
 
-        {/* Final scores */}
-        <div className="flex w-full max-w-3xl flex-col gap-2">
-          {state.players.map((ps) => (
+        {/* Player stats cards */}
+        <div className={`grid w-full max-w-3xl gap-4 ${
+          playerStats.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+        }`}>
+          {playerStats.map(({ playerId, name, isWinner, stats }) => (
             <div
-              key={ps.playerId}
-              className={`flex items-center justify-between rounded-lg px-4 py-3 ${
-                ps.playerId === state.winnerId
-                  ? "bg-green-500/10 border border-green-500"
+              key={playerId}
+              className={`rounded-xl px-6 py-5 ${
+                isWinner
+                  ? "bg-green-500/10 border-2 border-green-500"
                   : "bg-zinc-100 dark:bg-zinc-900"
               }`}
             >
-              <span className="font-medium">{playerName(ps.playerId)}</span>
-              <span className="text-lg font-bold tabular-nums">{ps.score}</span>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-lg font-bold">{name}</span>
+                {isWinner && (
+                  <span className="rounded-full bg-green-500 px-3 py-0.5 text-xs font-semibold text-white">
+                    Winner
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-y-4 gap-x-6 text-center">
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.ppr.toFixed(1)}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">PPR</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.first9Ppr.toFixed(1)}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">First 9 PPR</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.checkoutRate}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Checkout</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.visits60}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">60+</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.visits100}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">100+</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.visits140}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">140+</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.visits180}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">180s</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums">{stats.totalDarts}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Darts</p>
+                </div>
+              </div>
             </div>
           ))}
         </div>

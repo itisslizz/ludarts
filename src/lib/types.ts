@@ -68,6 +68,65 @@ export interface X01State {
   winnerId: string | null;
 }
 
+// --- Cricket (standard + hammer) ---
+
+export interface CricketThrowRecord {
+  segment: Segment;
+  target: number | null;
+  marksAdded: number;
+  pointsScored: number;
+}
+
+export interface CricketPlayerState {
+  playerId: string;
+  marks: Record<number, number>;
+  score: number;
+}
+
+export type CricketPhase = "playing" | "complete";
+
+export interface CricketState {
+  phase: CricketPhase;
+  variant: "cricket" | "hammer";
+  targets: number[];
+  playerIds: string[];
+  players: CricketPlayerState[];
+  currentPlayerIndex: number;
+  currentVisit: CricketThrowRecord[];
+  throwCount: number;
+  winnerId: string | null;
+}
+
+// --- Got'em ---
+
+export interface GotemThrowRecord {
+  segment: Segment;
+  target: number | null;
+  marksAdded: number;
+  pointsScored: number;
+  claimed: boolean;
+}
+
+export interface GotemPlayerState {
+  playerId: string;
+  marks: Record<number, number>;
+  score: number;
+}
+
+export type GotemPhase = "playing" | "complete";
+
+export interface GotemState {
+  phase: GotemPhase;
+  targets: number[];
+  ownership: Record<number, string | null>;
+  playerIds: string[];
+  players: GotemPlayerState[];
+  currentPlayerIndex: number;
+  currentVisit: GotemThrowRecord[];
+  throwCount: number;
+  winnerId: string | null;
+}
+
 // --- Player ---
 
 export interface Player {

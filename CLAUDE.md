@@ -24,6 +24,24 @@ npm run lint         # ESLint
 npm run start        # Start production server
 ```
 
+## Games
+
+Each game lives in `src/games/<game-id>/` with `useGameLogic.ts` (reducer) and `GameView.tsx`.
+
+| Game ID | Name | Players | Targets | Description |
+|---------|------|---------|---------|-------------|
+| `around-the-world` | Around The World | 1 | 1–20, Bull | Hit each number in sequence |
+| `x01` | X01 | 1–6 | All | Count down from 301/501/701 to zero (configurable out mode) |
+| `cricket` | Cricket | 2–6 | 15–20, Bull | Close targets and outscore opponents |
+| `hammer-cricket` | Hammer Cricket | 2–6 | 1–20, Bull | Cricket with all numbers |
+| `gotem` | Got'em | 2–6 | 1–20, Bull | Claim numbers with 3 hits, score on owned numbers |
+
+### Game Architecture
+- **State management:** `useReducer` with action types `REGISTER_THROW`, `END_TURN`, `UNDO`, `RESET`
+- **Board integration:** Games register throw handlers via `onThrowDetected` and takeout handlers via `onTakeout`
+- **Routing:** `GameScreen` dispatches to game views; `GameConfigScreen` handles per-game config (X01 only currently)
+- **Bust/Takeout:** Both immediately end the current turn and advance to the next player
+
 ## Autodarts Integration
 
 ### API

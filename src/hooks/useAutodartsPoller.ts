@@ -6,22 +6,30 @@ import type { AutodartsState, Segment } from "@/lib/types";
 interface UseAutodartsPollerOptions {
   processThrows: boolean;
   onThrowDetected: (segment: Segment) => void;
+  onTakeout?: () => void;
   intervalMs?: number;
 }
 
 export function useAutodartsPoller({
   processThrows,
   onThrowDetected,
+  onTakeout,
   intervalMs = 1000,
 }: UseAutodartsPollerOptions) {
   const prevLengthRef = useRef(0);
+  const prevStatusRef = useRef<string | null>(null);
   const onThrowRef = useRef(onThrowDetected);
+  const onTakeoutRef = useRef(onTakeout);
   const processThrowsRef = useRef(processThrows);
   const [boardRunning, setBoardRunning] = useState<boolean | null>(null);
 
   useEffect(() => {
     onThrowRef.current = onThrowDetected;
   }, [onThrowDetected]);
+
+  useEffect(() => {
+    onTakeoutRef.current = onTakeout;
+  }, [onTakeout]);
 
   useEffect(() => {
     processThrowsRef.current = processThrows;
@@ -32,6 +40,7 @@ export function useAutodartsPoller({
 
   const resetTracking = useCallback(() => {
     prevLengthRef.current = 0;
+    prevStatusRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -61,6 +70,13 @@ export function useAutodartsPoller({
         }
 
         prevLengthRef.current = currentLength;
+
+        // Detect transition to Takeout status
+        const status = data.status as string;
+        if (status === "Takeout" && prevStatusRef.current !== "Takeout") {
+          onTakeoutRef.current?.();
+        }
+        prevStatusRef.current = status;
       } catch {
         setBoardRunning(null);
       }
