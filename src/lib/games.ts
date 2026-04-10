@@ -25,22 +25,6 @@ export const GAMES: GameDefinition[] = [
     maxPlayers: 6,
     hasConfig: false,
   },
-  {
-    id: "hammer-cricket",
-    name: "Hammer Cricket",
-    description: "Cricket with all 20 numbers and Bull",
-    minPlayers: 2,
-    maxPlayers: 6,
-    hasConfig: false,
-  },
-  {
-    id: "gotem",
-    name: "Got'em",
-    description: "Claim numbers by hitting them 3 times — first to own scores",
-    minPlayers: 2,
-    maxPlayers: 6,
-    hasConfig: false,
-  },
 ];
 
 export function getGame(id: string): GameDefinition | undefined {

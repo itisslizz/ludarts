@@ -3,14 +3,13 @@
 import { ATWGameView } from "@/games/around-the-world/GameView";
 import { X01GameView } from "@/games/x01/GameView";
 import { CricketGameView } from "@/games/cricket/GameView";
-import { GotemGameView } from "@/games/gotem/GameView";
 import type { Segment, GameConfig, X01Config } from "@/lib/types";
 
 interface GameScreenProps {
   gameId: string;
   playerIds: string[];
   config: GameConfig;
-  onThrowDetected: (handler: (segment: Segment) => void) => void;
+  onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
@@ -49,27 +48,6 @@ export function GameScreen({
       return (
         <CricketGameView
           variant="cricket"
-          playerIds={playerIds}
-          onThrowDetected={onThrowDetected}
-          onTakeout={onTakeout}
-          onQuit={onQuit}
-          onPlayAgain={onPlayAgain}
-        />
-      );
-    case "hammer-cricket":
-      return (
-        <CricketGameView
-          variant="hammer"
-          playerIds={playerIds}
-          onThrowDetected={onThrowDetected}
-          onTakeout={onTakeout}
-          onQuit={onQuit}
-          onPlayAgain={onPlayAgain}
-        />
-      );
-    case "gotem":
-      return (
-        <GotemGameView
           playerIds={playerIds}
           onThrowDetected={onThrowDetected}
           onTakeout={onTakeout}
