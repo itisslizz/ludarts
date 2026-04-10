@@ -1,0 +1,11 @@
+services:
+  autodarts:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - autodarts-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  autodarts-data:
