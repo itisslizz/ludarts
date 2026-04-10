@@ -16,7 +16,7 @@ export function PlayerSelectScreen({
   onBack,
 }: PlayerSelectScreenProps) {
   const game = getGame(gameId);
-  const { players, addPlayer, deletePlayer } = usePlayerStore();
+  const { players, addPlayer } = usePlayerStore();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newName, setNewName] = useState("");
 
@@ -49,15 +49,6 @@ export function PlayerSelectScreen({
     } else if (!game || selected.size < game.maxPlayers) {
       setSelected((prev) => new Set(prev).add(player.id));
     }
-  }
-
-  async function handleDelete(id: string) {
-    await deletePlayer(id);
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
   }
 
   const canStart =
@@ -104,15 +95,6 @@ export function PlayerSelectScreen({
               {selected.has(player.id) && "✓"}
             </div>
             <span className="flex-1 font-medium">{player.name}</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(player.id);
-              }}
-              className="text-zinc-400 transition-colors hover:text-red-500"
-            >
-              ✕
-            </button>
           </div>
         ))}
       </div>

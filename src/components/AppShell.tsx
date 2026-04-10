@@ -8,17 +8,19 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { GameConfigScreen } from "@/components/GameConfigScreen";
 import { PlayerSelectScreen } from "@/components/PlayerSelectScreen";
 import { GameScreen } from "@/components/GameScreen";
+import { PlayersScreen } from "@/components/PlayersScreen";
+import { PlayerDetailScreen } from "@/components/PlayerDetailScreen";
 import type { Segment } from "@/lib/types";
 
 export function AppShell() {
-  const { view, goHome, selectGame, configureGame, startGame } =
+  const { view, goHome, goPlayers, goPlayerDetail, selectGame, configureGame, startGame } =
     useAppNavigation();
 
-  const throwHandlerRef = useRef<((segment: Segment) => void) | null>(null);
+  const throwHandlerRef = useRef<((segment: Segment, coords?: { x: number; y: number }) => void) | null>(null);
   const takeoutHandlerRef = useRef<(() => void) | null>(null);
 
-  const handleThrow = useCallback((segment: Segment) => {
-    throwHandlerRef.current?.(segment);
+  const handleThrow = useCallback((segment: Segment, coords?: { x: number; y: number }) => {
+    throwHandlerRef.current?.(segment, coords);
   }, []);
 
   const handleTakeout = useCallback(() => {
@@ -33,13 +35,23 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <header className="flex items-center justify-center border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <BoardControls boardRunning={boardRunning} />
-      </header>
+      {view.screen === "playing" && (
+        <header className="flex items-center justify-center border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+          <BoardControls boardRunning={boardRunning} />
+        </header>
+      )}
 
-      <main className="flex flex-1 flex-col px-4">
+      <main className="flex flex-1 flex-col px-4 py-6">
         {view.screen === "home" && (
-          <HomeScreen onSelectGame={selectGame} />
+          <HomeScreen onSelectGame={selectGame} onManagePlayers={goPlayers} />
+        )}
+
+        {view.screen === "players" && (
+          <PlayersScreen onBack={goHome} onSelectPlayer={goPlayerDetail} />
+        )}
+
+        {view.screen === "player-detail" && (
+          <PlayerDetailScreen playerId={view.playerId} onBack={goPlayers} />
         )}
 
         {view.screen === "game-config" && (

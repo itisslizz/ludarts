@@ -4,9 +4,10 @@ import { GAMES } from "@/lib/games";
 
 interface HomeScreenProps {
   onSelectGame: (gameId: string) => void;
+  onManagePlayers: () => void;
 }
 
-export function HomeScreen({ onSelectGame }: HomeScreenProps) {
+export function HomeScreen({ onSelectGame, onManagePlayers }: HomeScreenProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8">
       <h1 className="text-4xl font-bold tracking-tight">Autodarts</h1>
@@ -29,6 +30,13 @@ export function HomeScreen({ onSelectGame }: HomeScreenProps) {
           </button>
         ))}
       </div>
+
+      <button
+        onClick={onManagePlayers}
+        className="rounded-xl border border-zinc-300 px-8 py-4 text-sm font-medium transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:border-zinc-600 dark:hover:bg-zinc-800/50"
+      >
+        Manage Players
+      </button>
     </div>
   );
 }
