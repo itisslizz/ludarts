@@ -6,11 +6,11 @@ export interface PlayerStore {
   remove(id: string): Promise<void>;
 }
 
-// --- localStorage implementation ---
+// --- localStorage helpers (for migration) ---
 
 const STORAGE_KEY = "autodarts-players";
 
-function read(): Player[] {
+function readLocal(): Player[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -20,25 +20,44 @@ function read(): Player[] {
   }
 }
 
-function write(players: Player[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+function clearLocal() {
+  localStorage.removeItem(STORAGE_KEY);
 }
 
-export const localPlayerStore: PlayerStore = {
+// --- API-backed implementation ---
+
+async function migrateFromLocalStorage() {
+  const local = readLocal();
+  if (local.length === 0) return;
+
+  for (const player of local) {
+    await fetch("/api/players", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: player.id, name: player.name }),
+    });
+  }
+
+  clearLocal();
+}
+
+export const apiPlayerStore: PlayerStore = {
   async getAll() {
-    return read();
+    await migrateFromLocalStorage();
+    const res = await fetch("/api/players");
+    return res.json();
   },
 
   async add(name: string) {
-    const player: Player = { id: crypto.randomUUID(), name };
-    const players = read();
-    players.push(player);
-    write(players);
-    return player;
+    const res = await fetch("/api/players", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    return res.json();
   },
 
   async remove(id: string) {
-    const players = read().filter((p) => p.id !== id);
-    write(players);
+    await fetch(`/api/players/${id}`, { method: "DELETE" });
   },
 };

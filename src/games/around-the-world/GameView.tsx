@@ -8,7 +8,7 @@ import { SEQUENCE } from "@/lib/constants";
 import type { Segment } from "@/lib/types";
 
 interface ATWGameViewProps {
-  onThrowDetected: (handler: (segment: Segment) => void) => void;
+  onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
 }

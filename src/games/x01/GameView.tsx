@@ -1,7 +1,9 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { useX01GameLogic } from "./useGameLogic";
 import { computeStats } from "./stats";
+import { saveX01Game } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
@@ -9,7 +11,7 @@ import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
 interface X01GameViewProps {
   config: X01Config;
   playerIds: string[];
-  onThrowDetected: (handler: (segment: Segment) => void) => void;
+  onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
@@ -87,9 +89,21 @@ export function X01GameView({
 }: X01GameViewProps) {
   const { state, registerThrow, endTurn, undo, reset } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
+  const savedRef = useRef(false);
 
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
+
+  // Save completed game to DB
+  useEffect(() => {
+    if (state.phase === "complete" && !savedRef.current) {
+      savedRef.current = true;
+      saveX01Game(state).catch(() => {});
+    }
+    if (state.phase === "playing") {
+      savedRef.current = false;
+    }
+  }, [state.phase, state]);
 
   const playerName = (id: string) =>
     allPlayers.find((p) => p.id === id)?.name ?? "Unknown";

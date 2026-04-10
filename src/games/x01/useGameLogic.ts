@@ -14,7 +14,7 @@ interface X01InitArgs {
 }
 
 type Action =
-  | { type: "REGISTER_THROW"; segment: Segment }
+  | { type: "REGISTER_THROW"; segment: Segment; coords?: { x: number; y: number } }
   | { type: "END_TURN" }
   | { type: "UNDO" }
   | { type: "RESET" };
@@ -96,6 +96,7 @@ function reducer(state: X01State, action: Action): X01State {
         segment: action.segment,
         points: busted ? 0 : points,
         busted,
+        coords: action.coords,
       };
 
       const visit = [...state.currentVisit, record];
@@ -265,7 +266,8 @@ export function useX01GameLogic(config: X01Config, playerIds: string[]) {
   const [state, dispatch] = useReducer(reducer, { config, playerIds }, createInitialState);
 
   const registerThrow = useCallback(
-    (segment: Segment) => dispatch({ type: "REGISTER_THROW", segment }),
+    (segment: Segment, coords?: { x: number; y: number }) =>
+      dispatch({ type: "REGISTER_THROW", segment, coords }),
     [],
   );
   const endTurn = useCallback(() => dispatch({ type: "END_TURN" }), []);

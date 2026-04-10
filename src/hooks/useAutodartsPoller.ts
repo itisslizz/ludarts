@@ -5,7 +5,7 @@ import type { AutodartsState, Segment } from "@/lib/types";
 
 interface UseAutodartsPollerOptions {
   processThrows: boolean;
-  onThrowDetected: (segment: Segment) => void;
+  onThrowDetected: (segment: Segment, coords?: { x: number; y: number }) => void;
   onTakeout?: () => void;
   intervalMs?: number;
 }
@@ -65,7 +65,7 @@ export function useAutodartsPoller({
         if (currentLength > prevLength) {
           const newThrows = throws.slice(prevLength);
           for (const dart of newThrows) {
-            onThrowRef.current(dart.segment);
+            onThrowRef.current(dart.segment, dart.coords);
           }
         }
 

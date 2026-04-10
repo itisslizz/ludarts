@@ -44,6 +44,7 @@ export interface X01ThrowRecord {
   segment: Segment;
   points: number;
   busted: boolean;
+  coords?: { x: number; y: number };
 }
 
 export interface X01PlayerState {
@@ -151,6 +152,46 @@ export type GameConfig = Record<string, unknown>;
 
 export type AppView =
   | { screen: "home" }
+  | { screen: "players" }
+  | { screen: "player-detail"; playerId: string }
   | { screen: "game-config"; gameId: string }
   | { screen: "player-select"; gameId: string; config: GameConfig }
   | { screen: "playing"; gameId: string; playerIds: string[]; config: GameConfig };
+
+// --- Stats DB types ---
+
+export interface DbPlayer {
+  id: string;
+  name: string;
+  created_at: string;
+}
+
+export interface DbX01Game {
+  id: string;
+  target_score: number;
+  out_mode: string;
+  started_at: string;
+  finished_at: string | null;
+  winner_id: string | null;
+}
+
+export interface DbX01GamePlayer {
+  game_id: string;
+  player_id: string;
+  position: number;
+}
+
+export interface DbX01Dart {
+  id?: number;
+  game_id: string;
+  player_id: string;
+  visit_number: number;
+  dart_index: number;
+  segment_name: string;
+  segment_number: number;
+  segment_multiplier: number;
+  score: number;
+  is_bust: number;
+  coord_x: number | null;
+  coord_y: number | null;
+}

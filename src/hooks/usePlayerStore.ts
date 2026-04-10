@@ -3,9 +3,9 @@
 import { useState, useCallback, useEffect } from "react";
 import type { Player } from "@/lib/types";
 import type { PlayerStore } from "@/lib/player-store";
-import { localPlayerStore } from "@/lib/player-store";
+import { apiPlayerStore } from "@/lib/player-store";
 
-const store: PlayerStore = localPlayerStore;
+const store: PlayerStore = apiPlayerStore;
 
 export function usePlayerStore() {
   const [players, setPlayers] = useState<Player[]>([]);

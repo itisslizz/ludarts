@@ -8,7 +8,7 @@ import type { Segment, CricketThrowRecord } from "@/lib/types";
 interface CricketGameViewProps {
   variant: "cricket" | "hammer";
   playerIds: string[];
-  onThrowDetected: (handler: (segment: Segment) => void) => void;
+  onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
