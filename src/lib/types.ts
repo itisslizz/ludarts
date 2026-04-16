@@ -66,6 +66,7 @@ export interface X01State {
   currentVisit: X01ThrowRecord[];
   throwCount: number;
   busted: boolean;
+  waitingForTakeout: boolean;
   winnerId: string | null;
 }
 

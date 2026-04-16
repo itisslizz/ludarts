@@ -1,6 +1,6 @@
 export async function GET() {
   try {
-    const res = await fetch("http://autodarts.local:3180/api/state", {
+    const res = await fetch(`${process.env.BOARD_URL || "http://autodarts.local:3180"}/api/state`, {
       cache: "no-store",
     });
     const data = await res.json();

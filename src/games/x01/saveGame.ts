@@ -1,7 +1,14 @@
 import type { X01State, DbX01Game, DbX01GamePlayer, DbX01Dart } from "@/lib/types";
 
+function generateId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export async function saveX01Game(state: X01State): Promise<void> {
-  const gameId = crypto.randomUUID();
+  const gameId = generateId();
   const now = new Date().toISOString();
 
   const game: DbX01Game = {

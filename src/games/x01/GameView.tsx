@@ -15,6 +15,7 @@ interface X01GameViewProps {
   onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
+  onMount?: () => void;
 }
 
 function ThrowBadge({ record }: { record: X01ThrowRecord }) {
@@ -86,13 +87,23 @@ export function X01GameView({
   onTakeout,
   onQuit,
   onPlayAgain,
+  onMount,
 }: X01GameViewProps) {
   const { state, registerThrow, endTurn, undo, reset } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
   const savedRef = useRef(false);
+  const mountedRef = useRef(false);
 
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
+
+  // Reset board on mount
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      onMount?.();
+    }
+  }, [onMount]);
 
   // Save completed game to DB
   useEffect(() => {
@@ -212,6 +223,9 @@ export function X01GameView({
   const currentPlayer = state.players[state.currentPlayerIndex];
   const visitTotal = state.currentVisit.reduce((s, t) => s + t.points, 0);
   const isMultiplayer = state.playerIds.length > 1;
+  
+  // Can undo if there are throws in current visit OR any player has completed visits
+  const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
 
   // Interleave all visits for the combined history
   const allVisits: { visit: X01ThrowRecord[]; playerId: string }[] = [];
@@ -305,17 +319,42 @@ export function X01GameView({
         ) : null}
       </div>
 
-      {/* Undo button */}
-      <button
-        onClick={undo}
-        disabled={state.throwCount === 0}
-        className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Undo Last Throw
-      </button>
+      {state.waitingForTakeout ? (
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm font-semibold text-yellow-500 animate-pulse">
+            Waiting for takeout...
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            >
+              Undo
+            </button>
+            <button
+              onClick={endTurn}
+              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            >
+              Next Player
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Undo button */}
+          <button
+            onClick={undo}
+            disabled={!canUndo}
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            Undo
+          </button>
 
-      {/* Manual score entry */}
-      <ScorePicker onSelect={registerThrow} />
+          {/* Manual score entry */}
+          <ScorePicker onSelect={registerThrow} />
+        </>
+      )}
 
       {/* Visit history */}
       <div className="w-full max-w-3xl overflow-y-auto max-h-48">

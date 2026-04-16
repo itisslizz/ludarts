@@ -86,6 +86,11 @@ export function AppShell() {
             onQuit={goHome}
             onPlayAgain={() => {
               resetTracking();
+              fetch("/api/autodarts/reset", { method: "POST" }).catch(() => {});
+            }}
+            onMount={() => {
+              resetTracking();
+              fetch("/api/autodarts/reset", { method: "POST" }).catch(() => {});
             }}
           />
         )}

@@ -22,8 +22,16 @@ export interface StatsStore {
   clearPlayerStats(playerId: string): void;
 }
 
+export interface CheckoutDetail {
+  segment: string;
+  made: number;
+  attempts: number;
+}
+
 export interface PlayerDetailStats {
   ppr: number | null;
+  first9Ppr: number | null;
+  scoringPpr: number | null;
   winRate: number | null;
   gamesPlayed: number;
   totalDarts: number;
@@ -32,6 +40,8 @@ export interface PlayerDetailStats {
   tons: number;
   ton40s: number;
   ton80s: number;
+  checkoutDetails: CheckoutDetail[];
+  pprHistory: { date: string; ppr: number; first9Ppr: number; scoringPpr: number | null }[];
   recentGames: { id: string; targetScore: number; outMode: string; startedAt: string; won: boolean; ppr: number }[];
   darts: { x: number; y: number }[];
 }

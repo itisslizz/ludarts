@@ -13,6 +13,7 @@ interface GameScreenProps {
   onTakeout: (handler: () => void) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
+  onMount?: () => void;
 }
 
 export function GameScreen({
@@ -23,6 +24,7 @@ export function GameScreen({
   onTakeout,
   onQuit,
   onPlayAgain,
+  onMount,
 }: GameScreenProps) {
   switch (gameId) {
     case "around-the-world":
@@ -42,6 +44,7 @@ export function GameScreen({
           onTakeout={onTakeout}
           onQuit={onQuit}
           onPlayAgain={onPlayAgain}
+          onMount={onMount}
         />
       );
     case "cricket":

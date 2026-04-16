@@ -90,7 +90,17 @@ export const sqliteStatsStore: StatsStore = {
   },
 
   deletePlayer(id: string) {
-    db().prepare("DELETE FROM players WHERE id = ?").run(id);
+    const d = db();
+    const tx = d.transaction(() => {
+      d.prepare("DELETE FROM x01_darts WHERE player_id = ?").run(id);
+      d.prepare("DELETE FROM x01_game_players WHERE player_id = ?").run(id);
+      d.prepare("UPDATE x01_games SET winner_id = NULL WHERE winner_id = ?").run(id);
+      d.prepare(
+        "DELETE FROM x01_games WHERE id NOT IN (SELECT DISTINCT game_id FROM x01_game_players)",
+      ).run();
+      d.prepare("DELETE FROM players WHERE id = ?").run(id);
+    });
+    tx();
   },
 
   // --- X01 Games ---
@@ -228,8 +238,6 @@ export const sqliteStatsStore: StatsStore = {
            ORDER BY g2.started_at DESC LIMIT ${gameLimit}
          )`
       : "";
-    const gameParams = gameLimit ? [playerId, playerId, playerId] : [playerId, playerId];
-
     // PPR: average points per visit (busted visits score 0)
     const pprRow = d
       .prepare(
@@ -279,18 +287,6 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(...dartParams) as { best: number | null } | undefined;
 
-    // Checkout rate
-    const checkoutRow = d
-      .prepare(
-        `SELECT
-           COUNT(*) AS attempts,
-           COUNT(CASE WHEN g.winner_id = ? THEN 1 END) AS checkouts
-         FROM x01_games g
-         JOIN x01_game_players gp ON gp.game_id = g.id
-         WHERE gp.player_id = ? AND g.finished_at IS NOT NULL ${gameFilterForGames}`,
-      )
-      .get(...gameParams) as { attempts: number; checkouts: number } | undefined;
-
     // Visit score brackets: 100+, 140+, 180
     const bracketRow = d
       .prepare(
@@ -305,6 +301,20 @@ export const sqliteStatsStore: StatsStore = {
          ) WHERE visit_bust = 0`,
       )
       .get(...dartParams) as { tons: number; ton40s: number; ton80s: number };
+
+    // First 9 PPR (first 3 visits)
+    const first9Row = d
+      .prepare(
+        `SELECT
+           SUM(CASE WHEN visit_bust = 0 THEN visit_score ELSE 0 END) * 1.0 / NULLIF(COUNT(*), 0) AS ppr
+         FROM (
+           SELECT SUM(score) AS visit_score, MAX(is_bust) AS visit_bust
+           FROM x01_darts
+           WHERE player_id = ? ${gameFilter} AND visit_number <= 3
+           GROUP BY game_id, visit_number
+         )`,
+      )
+      .get(...dartParams) as { ppr: number | null } | undefined;
 
     // Recent games with per-game PPR
     const recentGames = d
@@ -333,20 +343,139 @@ export const sqliteStatsStore: StatsStore = {
       )
       .all(...dartParams) as { x: number; y: number }[];
 
-    const checkoutAttempts = checkoutRow?.attempts ?? 0;
+    // Per-double checkout details: reconstruct score at each dart to find attempts
+    const checkoutMap = new Map<string, { made: number; attempts: number }>();
+    let scoringVisitPoints = 0;
+    let scoringVisitCount = 0;
+    const pprHistory: { date: string; ppr: number; first9Ppr: number; scoringPpr: number | null }[] = [];
+    const checkoutGameParams = gameLimit ? [playerId, playerId] : [playerId];
+    const gameRows = d
+      .prepare(
+        `SELECT g.id, g.target_score, g.out_mode, g.winner_id, g.started_at
+         FROM x01_games g
+         JOIN x01_game_players gp ON gp.game_id = g.id
+         WHERE gp.player_id = ? AND g.finished_at IS NOT NULL ${gameFilterForGames}
+         ORDER BY g.started_at ASC`,
+      )
+      .all(...checkoutGameParams) as { id: string; target_score: number; out_mode: string; winner_id: string | null; started_at: string }[];
+
+    for (const game of gameRows) {
+      const gameDarts = d
+        .prepare(
+          `SELECT score, is_bust, segment_multiplier, segment_number, visit_number
+           FROM x01_darts
+           WHERE game_id = ? AND player_id = ?
+           ORDER BY visit_number, dart_index`,
+        )
+        .all(game.id, playerId) as { score: number; is_bust: number; segment_multiplier: number; segment_number: number; visit_number: number }[];
+
+      let remaining = game.target_score;
+      let visitStart = remaining;
+      let currentVisit = 0;
+      let visitScore = 0;
+      let visitBusted = false;
+
+      // Per-game tracking
+      let gameVisitCount = 0;
+      let gameVisitPoints = 0;
+      let gameFirst9Points = 0;
+      let gameFirst9Visits = 0;
+      let gameScoringPoints = 0;
+      let gameScoringVisits = 0;
+
+      function flushVisit() {
+        if (currentVisit === 0) return;
+        const pts = visitBusted ? 0 : visitScore;
+        gameVisitCount++;
+        gameVisitPoints += pts;
+        if (currentVisit <= 3) {
+          gameFirst9Visits++;
+          gameFirst9Points += pts;
+        }
+        if (visitStart > 170) {
+          gameScoringVisits++;
+          gameScoringPoints += pts;
+          scoringVisitCount++;
+          scoringVisitPoints += pts;
+        }
+      }
+
+      for (const dart of gameDarts) {
+        if (dart.visit_number !== currentVisit) {
+          flushVisit();
+          currentVisit = dart.visit_number;
+          visitStart = remaining;
+          visitScore = 0;
+          visitBusted = false;
+        }
+
+        visitScore += dart.score;
+        if (dart.is_bust) visitBusted = true;
+
+        // Check if remaining is a valid checkout (double-out)
+        if (game.out_mode === "double" || game.out_mode === "Double Out") {
+          const isCheckoutNum =
+            (remaining >= 2 && remaining <= 40 && remaining % 2 === 0) ||
+            remaining === 50;
+
+          if (isCheckoutNum) {
+            const targetDouble = remaining === 50 ? "D-Bull" : `D${remaining / 2}`;
+            const entry = checkoutMap.get(targetDouble) ?? { made: 0, attempts: 0 };
+            entry.attempts++;
+            if (dart.segment_multiplier === 2 && dart.score === remaining) {
+              entry.made++;
+            }
+            checkoutMap.set(targetDouble, entry);
+          }
+        }
+
+        if (dart.is_bust) {
+          remaining = visitStart;
+        } else {
+          remaining -= dart.score;
+        }
+      }
+
+      flushVisit();
+
+      if (gameVisitCount > 0) {
+        pprHistory.push({
+          date: game.started_at,
+          ppr: gameVisitPoints / gameVisitCount,
+          first9Ppr: gameFirst9Visits > 0 ? gameFirst9Points / gameFirst9Visits : 0,
+          scoringPpr: gameScoringVisits > 0 ? gameScoringPoints / gameScoringVisits : null,
+        });
+      }
+    }
+
+    const checkoutDetails = [...checkoutMap.entries()]
+      .map(([segment, { made, attempts }]) => ({ segment, made, attempts }))
+      .sort((a, b) => b.attempts - a.attempts);
+
+    // Real checkout rate from per-dart attempts
+    let totalCheckoutAttempts = 0;
+    let totalCheckoutMade = 0;
+    for (const entry of checkoutMap.values()) {
+      totalCheckoutAttempts += entry.attempts;
+      totalCheckoutMade += entry.made;
+    }
 
     return {
       ppr: pprRow?.ppr ?? null,
+      first9Ppr: first9Row?.ppr ?? null,
+      scoringPpr: scoringVisitCount > 0 ? (scoringVisitPoints / scoringVisitCount) : null,
       winRate: gamesPlayed > 0 ? ((winRow!.wins / gamesPlayed) * 100) : null,
       gamesPlayed,
       totalDarts: dartCountRow.cnt,
       highestVisit: highVisitRow?.best ?? null,
-      checkoutRate: checkoutAttempts > 0
-        ? ((checkoutRow!.checkouts / checkoutAttempts) * 100)
+      checkoutRate: totalCheckoutAttempts > 0
+        ? ((totalCheckoutMade / totalCheckoutAttempts) * 100)
         : null,
       tons: bracketRow.tons,
       ton40s: bracketRow.ton40s,
       ton80s: bracketRow.ton80s,
+      checkoutDetails,
+      pprHistory,
       recentGames: recentGames.map((g) => ({
         id: g.id,
         targetScore: g.target_score,

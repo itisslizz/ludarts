@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-const BOARD_URL = "http://autodarts.local:3180";
+const BOARD_URL = process.env.BOARD_URL || "http://autodarts.local:3180";
 
 const PUT_ACTIONS = ["start", "stop"];
 const POST_ACTIONS = ["reset"];

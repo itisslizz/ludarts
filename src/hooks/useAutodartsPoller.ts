@@ -63,20 +63,25 @@ export function useAutodartsPoller({
         const prevLength = prevLengthRef.current;
 
         if (currentLength > prevLength) {
+          // New throws detected — register them but don't fire takeout this cycle
           const newThrows = throws.slice(prevLength);
           for (const dart of newThrows) {
             onThrowRef.current(dart.segment, dart.coords);
           }
-        }
-
-        prevLengthRef.current = currentLength;
-
-        // Detect transition to Takeout status
-        const status = data.status as string;
-        if (status === "Takeout" && prevStatusRef.current !== "Takeout") {
+          prevLengthRef.current = currentLength;
+        } else if (currentLength < prevLength && prevLength > 0) {
+          // Throw count decreased — board was reset (darts removed = takeout)
+          prevLengthRef.current = currentLength;
           onTakeoutRef.current?.();
+        } else {
+          // No new throws — check for status-based takeout as fallback
+          const status = data.status as string;
+          if (status === "Takeout" && prevStatusRef.current !== "Takeout") {
+            onTakeoutRef.current?.();
+          }
         }
-        prevStatusRef.current = status;
+
+        prevStatusRef.current = data.status as string;
       } catch {
         setBoardRunning(null);
       }

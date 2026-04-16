@@ -35,6 +35,7 @@ function createInitialState({ config, playerIds }: X01InitArgs): X01State {
     currentVisit: [],
     throwCount: 0,
     busted: false,
+    waitingForTakeout: false,
     winnerId: null,
   };
 }
@@ -84,7 +85,7 @@ function advancePlayer(state: X01State, visit: X01ThrowRecord[]): X01State {
 function reducer(state: X01State, action: Action): X01State {
   switch (action.type) {
     case "REGISTER_THROW": {
-      if (state.phase !== "playing") return state;
+      if (state.phase !== "playing" || state.waitingForTakeout) return state;
 
       const cp = state.players[state.currentPlayerIndex];
 
@@ -101,16 +102,15 @@ function reducer(state: X01State, action: Action): X01State {
 
       const visit = [...state.currentVisit, record];
 
-      // Busted — turn ends immediately
+      // Busted — wait for takeout before advancing
       if (busted) {
-        const nextState = {
+        return {
           ...state,
           throwCount: state.throwCount + 1,
           currentVisit: visit,
           busted: true,
+          waitingForTakeout: true,
         };
-
-        return advancePlayer(nextState, visit);
       }
 
       // Checked out — winner!
@@ -125,6 +125,7 @@ function reducer(state: X01State, action: Action): X01State {
           throwCount: state.throwCount + 1,
           currentVisit: [],
           busted: false,
+          waitingForTakeout: false,
           winnerId: cp.playerId,
         };
       }
@@ -135,25 +136,30 @@ function reducer(state: X01State, action: Action): X01State {
       );
 
       const isVisitEnd = visit.length >= 3;
-      const nextState = {
+
+      // 3 darts thrown — wait for takeout before advancing
+      if (isVisitEnd) {
+        return {
+          ...state,
+          players: updatedPlayers.map((p, i) =>
+            i === state.currentPlayerIndex
+              ? { ...p, scoreAtVisitStart: newScore }
+              : p,
+          ),
+          throwCount: state.throwCount + 1,
+          currentVisit: visit,
+          busted: false,
+          waitingForTakeout: true,
+        };
+      }
+
+      return {
         ...state,
         players: updatedPlayers,
         throwCount: state.throwCount + 1,
         currentVisit: visit,
         busted: false,
       };
-
-      if (isVisitEnd) {
-        // Lock in scoreAtVisitStart for the current player before advancing
-        nextState.players = nextState.players.map((p, i) =>
-          i === state.currentPlayerIndex
-            ? { ...p, scoreAtVisitStart: newScore }
-            : p,
-        );
-        return advancePlayer(nextState, visit);
-      }
-
-      return nextState;
     }
 
     case "END_TURN": {
@@ -163,6 +169,7 @@ function reducer(state: X01State, action: Action): X01State {
       const visit = state.currentVisit;
       const nextState = {
         ...state,
+        waitingForTakeout: false,
         players: state.players.map((p, i) =>
           i === state.currentPlayerIndex
             ? { ...p, scoreAtVisitStart: p.score }
@@ -173,7 +180,6 @@ function reducer(state: X01State, action: Action): X01State {
     }
 
     case "UNDO": {
-      if (state.throwCount === 0) return state;
 
       // If there are throws in the current visit, undo the last one
       if (state.currentVisit.length > 0) {
@@ -196,11 +202,12 @@ function reducer(state: X01State, action: Action): X01State {
           currentVisit: remainingVisit,
           throwCount: state.throwCount - 1,
           busted: stillBusted,
+          waitingForTakeout: false,
           winnerId: null,
         };
       }
 
-      // Current visit is empty — go back to previous player's last visit
+      // Current visit is empty — go back to previous player's entire last visit
       const prevPlayerIndex =
         (state.currentPlayerIndex - 1 + state.playerIds.length) %
         state.playerIds.length;
@@ -209,24 +216,23 @@ function reducer(state: X01State, action: Action): X01State {
       if (prevPlayer.visits.length === 0) return state;
 
       const lastVisit = prevPlayer.visits[prevPlayer.visits.length - 1];
-      const lastThrow = lastVisit[lastVisit.length - 1];
-      const remainingVisit = lastVisit.slice(0, -1);
 
-      // Recalculate score: the scoreAtVisitStart was set when the visit ended
-      // We need to restore the score before the last throw
+      // Calculate scores: prevPlayer.score is the score after the visit was completed
       const visitWasBusted = lastVisit.some((t) => t.busted);
-      const restoredScore = visitWasBusted
-        ? prevPlayer.scoreAtVisitStart
-        : prevPlayer.score + lastThrow.points;
+      const totalPoints = lastVisit.reduce((sum, t) => sum + t.points, 0);
+      
+      // Score at the END of the visit (current score)
+      const scoreAtEndOfVisit = prevPlayer.score;
+      
+      // Score at the START of the visit (for undoing)
+      const scoreAtStartOfVisit = visitWasBusted
+        ? prevPlayer.score  // If busted, score was reverted, so end = start
+        : prevPlayer.score + totalPoints;  // If not busted, add back the points
 
-      const stillBusted = remainingVisit.some((t) => t.busted);
+      const stillBusted = lastVisit.some((t) => t.busted);
 
-      // Restore the previous player's score to before that visit started
-      // and put the remaining throws back as their current visit
-      const prevScoreAtVisitStart = visitWasBusted
-        ? prevPlayer.scoreAtVisitStart
-        : prevPlayer.scoreAtVisitStart;
-
+      // Restore the entire previous visit as the current visit
+      // Set waitingForTakeout to true so the user cannot add a 4th dart
       return {
         ...state,
         phase: "playing",
@@ -235,15 +241,16 @@ function reducer(state: X01State, action: Action): X01State {
           i === prevPlayerIndex
             ? {
                 ...p,
-                score: restoredScore,
-                scoreAtVisitStart: prevScoreAtVisitStart,
+                score: scoreAtEndOfVisit,
+                scoreAtVisitStart: scoreAtStartOfVisit,
                 visits: p.visits.slice(0, -1),
               }
             : p,
         ),
-        currentVisit: remainingVisit,
-        throwCount: state.throwCount - 1,
+        currentVisit: lastVisit,
+        throwCount: state.throwCount - lastVisit.length,
         busted: stillBusted,
+        waitingForTakeout: true,
         winnerId: null,
       };
     }
