@@ -40,16 +40,16 @@ function NumberGrid({
 }) {
   const prefix = multiplier === 3 ? "T" : multiplier === 2 ? "D" : "";
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
       <p className="text-center text-xs font-medium text-zinc-500 dark:text-zinc-400">
         {label}
       </p>
-      <div className="grid grid-cols-5 gap-1">
+      <div className="grid grid-cols-5 gap-2">
         {NUMBERS.map((n) => (
           <button
             key={n}
             onClick={() => onSelect(makeSegment(n, multiplier))}
-            className={`rounded py-3 text-center text-sm font-semibold transition-colors ${btnClass}`}
+            className={`rounded py-4 text-center text-sm font-semibold transition-colors ${btnClass}`}
           >
             {prefix}{n}
           </button>
@@ -61,9 +61,9 @@ function NumberGrid({
 
 export function ScorePicker({ onSelect }: ScorePickerProps) {
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-3">
+    <div className="flex w-full max-w-5xl flex-col gap-4">
       {/* Three-column grid: Singles | Doubles | Triples */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-6">
         <NumberGrid
           multiplier={1}
           onSelect={onSelect}
@@ -85,22 +85,22 @@ export function ScorePicker({ onSelect }: ScorePickerProps) {
       </div>
 
       {/* Single-Bull, Bull, Miss */}
-      <div className="flex gap-1">
+      <div className="flex gap-2">
         <button
           onClick={() => onSelect(makeSegment(25, 1))}
-          className="flex-1 rounded bg-green-600/15 py-3 text-center text-sm font-semibold text-green-700 transition-colors hover:bg-green-600/25 dark:text-green-400"
+          className="flex-1 rounded bg-green-600/15 py-4 text-center text-sm font-semibold text-green-700 transition-colors hover:bg-green-600/25 dark:text-green-400"
         >
           Single-Bull (25)
         </button>
         <button
           onClick={() => onSelect(makeSegment(25, 2))}
-          className="flex-1 rounded bg-red-600/15 py-3 text-center text-sm font-semibold text-red-700 transition-colors hover:bg-red-600/25 dark:text-red-400"
+          className="flex-1 rounded bg-red-600/15 py-4 text-center text-sm font-semibold text-red-700 transition-colors hover:bg-red-600/25 dark:text-red-400"
         >
           Bull (50)
         </button>
         <button
           onClick={() => onSelect(missSegment)}
-          className="flex-1 rounded bg-zinc-200 py-3 text-center text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600"
+          className="flex-1 rounded bg-zinc-200 py-4 text-center text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600"
         >
           Miss
         </button>

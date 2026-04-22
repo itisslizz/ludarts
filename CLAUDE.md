@@ -33,8 +33,6 @@ Each game lives in `src/games/<game-id>/` with `useGameLogic.ts` (reducer) and `
 | `around-the-world` | Around The World | 1 | 1–20, Bull | Hit each number in sequence |
 | `x01` | X01 | 1–6 | All | Count down from 301/501/701 to zero (configurable out mode) |
 | `cricket` | Cricket | 2–6 | 15–20, Bull | Close targets and outscore opponents |
-| `hammer-cricket` | Hammer Cricket | 2–6 | 1–20, Bull | Cricket with all numbers |
-| `gotem` | Got'em | 2–6 | 1–20, Bull | Claim numbers with 3 hits, score on owned numbers |
 
 ### Game Architecture
 - **State management:** `useReducer` with action types `REGISTER_THROW`, `END_TURN`, `UNDO`, `RESET`

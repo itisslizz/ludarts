@@ -19,6 +19,7 @@ function X01Config({
 }) {
   const [baseScore, setBaseScore] = useState<301 | 501 | 701>(301);
   const [outMode, setOutMode] = useState<"double" | "straight">("double");
+  const [firstTo, setFirstTo] = useState<1 | 2 | 3>(1);
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 py-8">
@@ -68,6 +69,28 @@ function X01Config({
         </div>
       </div>
 
+      {/* First to X legs */}
+      <div className="flex flex-col items-center gap-3">
+        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          Match Length
+        </p>
+        <div className="flex gap-2">
+          {([1, 2, 3] as const).map((legs) => (
+            <button
+              key={legs}
+              onClick={() => setFirstTo(legs)}
+              className={`rounded-lg px-6 py-3 text-sm font-semibold transition-colors ${
+                firstTo === legs
+                  ? "bg-green-600 text-white"
+                  : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              }`}
+            >
+              First to {legs}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex gap-4">
         <button
@@ -77,7 +100,7 @@ function X01Config({
           Back
         </button>
         <button
-          onClick={() => onContinue({ baseScore, outMode })}
+          onClick={() => onContinue({ baseScore, outMode, firstTo })}
           className="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
         >
           Next

@@ -106,7 +106,7 @@ export function CricketGameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-6">
-      <div className="flex w-full max-w-3xl items-center justify-between">
+      <div className="flex w-full max-w-5xl items-center justify-between">
         <button
           onClick={onQuit}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
@@ -130,18 +130,37 @@ export function CricketGameView({
         {playerName(currentPlayer.playerId)}&apos;s turn
       </p>
 
-      <div className="flex items-center gap-4">
-        <div className="flex gap-2">
-          {state.currentVisit.map((record, i) => (
-            <ThrowBadge key={i} record={record} />
-          ))}
+      {/* Current visit - Large display */}
+      <div className="w-full max-w-5xl">
+        <div className="grid grid-cols-3 gap-3">
+          {state.currentVisit.map((record, i) => {
+            const hasEffect = record.marksAdded > 0 || record.pointsScored > 0;
+            return (
+              <div
+                key={i}
+                className={`flex flex-col items-center justify-center rounded-xl border-2 px-6 py-8 min-h-[140px] ${
+                  hasEffect
+                    ? "bg-green-500/15 border-green-500 text-green-700 dark:text-green-400"
+                    : "bg-zinc-100 border-zinc-300 text-zinc-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-500"
+                }`}
+              >
+                <span className="text-4xl font-bold">
+                  {record.segment.name.toUpperCase()}
+                </span>
+                <span className="text-2xl font-semibold text-green-600 dark:text-green-400 mt-2 min-h-[32px]">
+                  {record.pointsScored > 0 && `+${record.pointsScored}`}
+                </span>
+              </div>
+            );
+          })}
           {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
-            <span
+            <div
               key={`empty-${i}`}
-              className="inline-flex h-7 w-12 items-center justify-center rounded border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-700"
+              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 px-6 py-8 text-2xl text-zinc-400 dark:border-zinc-700 min-h-[140px]"
             >
-              —
-            </span>
+              <span className="text-4xl">—</span>
+              <span className="text-2xl mt-2 min-h-[32px]"></span>
+            </div>
           ))}
         </div>
       </div>
@@ -169,7 +188,7 @@ function Scoreboard({
   currentPlayerIndex?: number;
 }) {
   return (
-    <div className="w-full max-w-3xl overflow-x-auto">
+    <div className="w-full max-w-5xl overflow-x-auto">
       <table className="w-full text-center text-sm">
         <thead>
           <tr>

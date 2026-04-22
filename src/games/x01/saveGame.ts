@@ -1,4 +1,4 @@
-import type { X01State, DbX01Game, DbX01GamePlayer, DbX01Dart } from "@/lib/types";
+import type { X01State, X01LegData, DbX01Game, DbX01GamePlayer, DbX01Dart } from "@/lib/types";
 
 function generateId(): string {
   const bytes = new Uint8Array(16);
@@ -7,7 +7,10 @@ function generateId(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-export async function saveX01Game(state: X01State): Promise<void> {
+export async function saveX01Leg(
+  legData: X01LegData,
+  state: X01State,
+): Promise<void> {
   const gameId = generateId();
   const now = new Date().toISOString();
 
@@ -15,9 +18,9 @@ export async function saveX01Game(state: X01State): Promise<void> {
     id: gameId,
     target_score: state.targetScore,
     out_mode: state.outMode,
-    started_at: now, // approximate — we don't track start time yet
+    started_at: now,
     finished_at: now,
-    winner_id: state.winnerId,
+    winner_id: legData.winnerId,
   };
 
   const players: DbX01GamePlayer[] = state.playerIds.map((pid, i) => ({
@@ -28,14 +31,14 @@ export async function saveX01Game(state: X01State): Promise<void> {
 
   const darts: Omit<DbX01Dart, "id">[] = [];
 
-  for (const ps of state.players) {
-    for (let visitIdx = 0; visitIdx < ps.visits.length; visitIdx++) {
-      const visit = ps.visits[visitIdx];
+  for (const playerData of legData.players) {
+    for (let visitIdx = 0; visitIdx < playerData.visits.length; visitIdx++) {
+      const visit = playerData.visits[visitIdx];
       for (let dartIdx = 0; dartIdx < visit.length; dartIdx++) {
         const t = visit[dartIdx];
         darts.push({
           game_id: gameId,
-          player_id: ps.playerId,
+          player_id: playerData.playerId,
           visit_number: visitIdx + 1,
           dart_index: dartIdx + 1,
           segment_name: t.segment.name,
@@ -55,4 +58,11 @@ export async function saveX01Game(state: X01State): Promise<void> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ game, players, darts }),
   });
+}
+
+export async function saveX01Game(state: X01State): Promise<void> {
+  // Save all completed legs
+  for (const legData of state.completedLegs) {
+    await saveX01Leg(legData, state);
+  }
 }

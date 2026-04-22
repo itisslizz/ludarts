@@ -38,6 +38,7 @@ export interface ATWState {
 export interface X01Config {
   baseScore: 301 | 501 | 701;
   outMode: "double" | "straight";
+  firstTo: 1 | 2 | 3;
 }
 
 export interface X01ThrowRecord {
@@ -47,11 +48,21 @@ export interface X01ThrowRecord {
   coords?: { x: number; y: number };
 }
 
+export interface X01LegData {
+  legNumber: number;
+  winnerId: string;
+  players: {
+    playerId: string;
+    visits: X01ThrowRecord[][];
+  }[];
+}
+
 export interface X01PlayerState {
   playerId: string;
   score: number;
   scoreAtVisitStart: number;
   visits: X01ThrowRecord[][];
+  legsWon: number;
 }
 
 export type X01Phase = "playing" | "complete";
@@ -60,6 +71,7 @@ export interface X01State {
   phase: X01Phase;
   targetScore: number;
   outMode: "double" | "straight";
+  firstTo: 1 | 2 | 3;
   playerIds: string[];
   players: X01PlayerState[];
   currentPlayerIndex: number;
@@ -68,6 +80,8 @@ export interface X01State {
   busted: boolean;
   waitingForTakeout: boolean;
   winnerId: string | null;
+  currentLeg: number;
+  completedLegs: X01LegData[];
 }
 
 // --- Cricket (standard + hammer) ---

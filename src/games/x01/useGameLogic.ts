@@ -4,6 +4,7 @@ import { useReducer, useCallback } from "react";
 import type {
   X01State,
   X01Config,
+  X01LegData,
   Segment,
   X01ThrowRecord,
 } from "@/lib/types";
@@ -24,12 +25,14 @@ function createInitialState({ config, playerIds }: X01InitArgs): X01State {
     phase: "playing",
     targetScore: config.baseScore,
     outMode: config.outMode,
+    firstTo: config.firstTo,
     playerIds,
     players: playerIds.map((id) => ({
       playerId: id,
       score: config.baseScore,
       scoreAtVisitStart: config.baseScore,
       visits: [],
+      legsWon: 0,
     })),
     currentPlayerIndex: 0,
     currentVisit: [],
@@ -37,6 +40,8 @@ function createInitialState({ config, playerIds }: X01InitArgs): X01State {
     busted: false,
     waitingForTakeout: false,
     winnerId: null,
+    currentLeg: 1,
+    completedLegs: [],
   };
 }
 
@@ -51,6 +56,27 @@ function isBust(
     if (newScore === 0 && segment.multiplier !== 2) return true;
   }
   return false;
+}
+
+function startNewLeg(state: X01State, completedLegData: X01LegData): X01State {
+  return {
+    ...state,
+    phase: "playing",
+    players: state.players.map((p) => ({
+      ...p,
+      score: state.targetScore,
+      scoreAtVisitStart: state.targetScore,
+      visits: [],
+    })),
+    currentPlayerIndex: 0,
+    currentVisit: [],
+    throwCount: 0,
+    busted: false,
+    waitingForTakeout: false,
+    winnerId: null,
+    currentLeg: state.currentLeg + 1,
+    completedLegs: [...state.completedLegs, completedLegData],
+  };
 }
 
 function advancePlayer(state: X01State, visit: X01ThrowRecord[]): X01State {
@@ -102,10 +128,15 @@ function reducer(state: X01State, action: Action): X01State {
 
       const visit = [...state.currentVisit, record];
 
-      // Busted — wait for takeout before advancing
+      // Busted — revert score and wait for takeout before advancing
       if (busted) {
         return {
           ...state,
+          players: state.players.map((p, i) =>
+            i === state.currentPlayerIndex
+              ? { ...p, score: cp.scoreAtVisitStart }
+              : p,
+          ),
           throwCount: state.throwCount + 1,
           currentVisit: visit,
           busted: true,
@@ -113,21 +144,48 @@ function reducer(state: X01State, action: Action): X01State {
         };
       }
 
-      // Checked out — winner!
+      // Checked out — leg won!
       if (newScore === 0) {
         const updatedPlayers = state.players.map((p, i) =>
-          i === state.currentPlayerIndex ? { ...p, score: 0, visits: [...p.visits, visit] } : p,
+          i === state.currentPlayerIndex 
+            ? { ...p, score: 0, visits: [...p.visits, visit], legsWon: p.legsWon + 1 } 
+            : p,
         );
-        return {
-          ...state,
-          phase: "complete",
-          players: updatedPlayers,
-          throwCount: state.throwCount + 1,
-          currentVisit: [],
-          busted: false,
-          waitingForTakeout: false,
+        
+        const currentPlayer = updatedPlayers[state.currentPlayerIndex];
+        const hasWonMatch = currentPlayer.legsWon >= state.firstTo;
+        
+        // Create leg data for this completed leg
+        const legData: X01LegData = {
+          legNumber: state.currentLeg,
           winnerId: cp.playerId,
+          players: updatedPlayers.map((p) => ({
+            playerId: p.playerId,
+            visits: p.visits,
+          })),
         };
+        
+        if (hasWonMatch) {
+          // Match complete - add final leg to completedLegs
+          return {
+            ...state,
+            phase: "complete",
+            players: updatedPlayers,
+            throwCount: state.throwCount + 1,
+            currentVisit: [],
+            busted: false,
+            waitingForTakeout: false,
+            winnerId: cp.playerId,
+            completedLegs: [...state.completedLegs, legData],
+          };
+        } else {
+          // Start a new leg
+          return startNewLeg({
+            ...state,
+            players: updatedPlayers,
+            throwCount: state.throwCount + 1,
+          }, legData);
+        }
       }
 
       // Valid throw, update player score
@@ -260,6 +318,7 @@ function reducer(state: X01State, action: Action): X01State {
         config: {
           baseScore: state.targetScore as 301 | 501 | 701,
           outMode: state.outMode,
+          firstTo: state.firstTo,
         },
         playerIds: state.playerIds,
       });

@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useX01GameLogic } from "./useGameLogic";
 import { computeStats } from "./stats";
-import { saveX01Game } from "./saveGame";
+import { saveX01Game, saveX01Leg } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
@@ -46,8 +46,8 @@ function VisitHistory({
     <div className="flex w-full flex-col gap-1">
       {[...visits].reverse().map((visit, ri) => {
         const visitIndex = visits.length - 1 - ri;
-        const visitTotal = visit.reduce((s, t) => s + t.points, 0);
         const busted = visit.some((t) => t.busted);
+        const visitTotal = busted ? 0 : visit.reduce((s, t) => s + t.points, 0);
 
         return (
           <div
@@ -93,6 +93,7 @@ export function X01GameView({
   const { players: allPlayers } = usePlayerStore();
   const savedRef = useRef(false);
   const mountedRef = useRef(false);
+  const savedLegsRef = useRef(0);
 
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
@@ -105,7 +106,19 @@ export function X01GameView({
     }
   }, [onMount]);
 
-  // Save completed game to DB
+  // Save each completed leg
+  useEffect(() => {
+    const newLegs = state.completedLegs.slice(savedLegsRef.current);
+    if (newLegs.length > 0) {
+      // Save each new leg
+      for (const legData of newLegs) {
+        saveX01Leg(legData, state).catch(() => {});
+      }
+      savedLegsRef.current = state.completedLegs.length;
+    }
+  }, [state.completedLegs.length, state]);
+
+  // Save completed game to DB (for final cleanup/verification)
   useEffect(() => {
     if (state.phase === "complete" && !savedRef.current) {
       savedRef.current = true;
@@ -139,7 +152,7 @@ export function X01GameView({
         </div>
 
         {/* Player stats cards */}
-        <div className={`grid w-full max-w-3xl gap-4 ${
+        <div className={`grid w-full max-w-5xl gap-4 ${
           playerStats.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
         }`}>
           {playerStats.map(({ playerId, name, isWinner, stats }) => (
@@ -221,7 +234,8 @@ export function X01GameView({
 
   // Playing phase
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const visitTotal = state.currentVisit.reduce((s, t) => s + t.points, 0);
+  const visitHasBust = state.currentVisit.some((t) => t.busted);
+  const visitTotal = visitHasBust ? 0 : state.currentVisit.reduce((s, t) => s + t.points, 0);
   const isMultiplayer = state.playerIds.length > 1;
   
   // Can undo if there are throws in current visit OR any player has completed visits
@@ -242,20 +256,27 @@ export function X01GameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-6 py-6">
-      <div className="flex w-full max-w-3xl items-center justify-between">
+      <div className="flex w-full max-w-5xl items-center justify-between">
         <button
           onClick={onQuit}
           className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
         >
           Quit
         </button>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          {state.outMode === "double" ? "Double Out" : "Straight Out"}
-        </p>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            {state.outMode === "double" ? "Double Out" : "Straight Out"}
+          </p>
+          {state.firstTo > 1 && (
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              Leg {state.currentLeg} • First to {state.firstTo}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Scoreboard */}
-      <div className={`grid w-full max-w-3xl gap-2 ${
+      <div className={`grid w-full max-w-5xl gap-2 ${
         isMultiplayer ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1"
       }`}>
         {state.players.map((ps, i) => {
@@ -263,23 +284,42 @@ export function X01GameView({
           const totalPoints = state.targetScore - ps.score;
           const ppr = totalDarts > 0 ? (totalPoints / (totalDarts / 3)).toFixed(1) : "—";
           const lastVisit = ps.visits.length > 0 ? ps.visits[ps.visits.length - 1] : null;
+          const lastVisitHasBust = lastVisit?.some((t) => t.busted) ?? false;
           const lastVisitScore = lastVisit
-            ? lastVisit.reduce((sum, t) => sum + t.points, 0)
+            ? (lastVisitHasBust ? 0 : lastVisit.reduce((sum, t) => sum + t.points, 0))
             : null;
+          
+          // Show visit total for current player (0 if busted)
+          const isCurrentPlayer = i === state.currentPlayerIndex;
+          const showVisitTotal = isCurrentPlayer && visitTotal > 0;
 
           return (
             <div
               key={ps.playerId}
               className={`flex flex-col items-center rounded-lg px-4 py-3 ${
-                i === state.currentPlayerIndex
+                isCurrentPlayer
                   ? "bg-yellow-400/15 border-2 border-yellow-400"
                   : "bg-zinc-100 dark:bg-zinc-900"
               }`}
             >
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate w-full text-center">
-                {playerName(ps.playerId)}
-              </span>
-              <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate text-center">
+                  {playerName(ps.playerId)}
+                </span>
+                {state.firstTo > 1 && ps.legsWon > 0 && (
+                  <span className="text-xs font-semibold text-green-600 dark:text-green-500">
+                    ({ps.legsWon})
+                  </span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
+                {showVisitTotal && (
+                  <span className="text-xl font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums">
+                    {visitTotal}
+                  </span>
+                )}
+              </div>
               <div className="flex gap-3 mt-1 text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">
                 <span>Last: {lastVisitScore !== null ? lastVisitScore : "—"}</span>
                 <span>PPR: {ppr}</span>
@@ -296,27 +336,43 @@ export function X01GameView({
         </p>
       )}
 
-      <div className="flex items-center gap-4">
-        <div className="flex gap-2">
+      {/* Current visit - Large display */}
+      <div className="w-full max-w-5xl">
+        <div className="grid grid-cols-3 gap-3">
           {state.currentVisit.map((record, i) => (
-            <ThrowBadge key={i} record={record} />
+            <div
+              key={i}
+              className={`flex flex-col items-center justify-center rounded-xl border-2 px-6 py-8 min-h-[140px] ${
+                record.busted
+                  ? "bg-red-500/15 border-red-500 text-red-600 dark:text-red-400"
+                  : "bg-zinc-100 border-zinc-300 text-zinc-700 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-300"
+              }`}
+            >
+              <span className="text-4xl font-bold">
+                {record.segment.name.toUpperCase()}
+              </span>
+              <span className="text-2xl font-semibold text-zinc-500 dark:text-zinc-400 mt-2 min-h-[32px]">
+                {!record.busted && record.points}
+              </span>
+            </div>
           ))}
           {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
-            <span
+            <div
               key={`empty-${i}`}
-              className="inline-flex h-7 w-12 items-center justify-center rounded border border-dashed border-zinc-300 text-xs text-zinc-400 dark:border-zinc-700"
+              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 px-6 py-8 text-2xl text-zinc-400 dark:border-zinc-700 min-h-[140px]"
             >
-              —
-            </span>
+              <span className="text-4xl">—</span>
+              <span className="text-2xl mt-2 min-h-[32px]"></span>
+            </div>
           ))}
         </div>
-        {state.busted ? (
-          <span className="text-sm font-bold text-red-500">BUST</span>
-        ) : visitTotal > 0 ? (
-          <span className="text-sm font-semibold text-zinc-500">
-            {visitTotal}
-          </span>
-        ) : null}
+        
+        {/* Bust message */}
+        {state.busted && (
+          <div className="flex justify-center mt-4">
+            <span className="text-2xl font-bold text-red-500">BUST</span>
+          </div>
+        )}
       </div>
 
       {state.waitingForTakeout ? (
@@ -357,12 +413,12 @@ export function X01GameView({
       )}
 
       {/* Visit history */}
-      <div className="w-full max-w-3xl overflow-y-auto max-h-48">
+      <div className="w-full max-w-5xl overflow-y-auto max-h-48">
         {isMultiplayer ? (
           <div className="flex flex-col gap-1">
             {[...allVisits].reverse().map((entry, i) => {
-              const visitTotal = entry.visit.reduce((s, t) => s + t.points, 0);
               const busted = entry.visit.some((t) => t.busted);
+              const visitTotal = busted ? 0 : entry.visit.reduce((s, t) => s + t.points, 0);
               return (
                 <div
                   key={allVisits.length - 1 - i}
