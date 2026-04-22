@@ -327,20 +327,13 @@ export function X01GameView({
         })}
       </div>
 
-      {/* Current player & visit */}
-      {isMultiplayer && (
-        <p className="text-xl text-zinc-500 dark:text-zinc-400">
-          {playerName(currentPlayer.playerId)}&apos;s turn
-        </p>
-      )}
-
       {/* Current visit - Large display */}
       <div className="w-full max-w-6xl">
         <div className="grid grid-cols-3 gap-4">
           {state.currentVisit.map((record, i) => (
             <div
               key={i}
-              className={`flex flex-col items-center justify-center rounded-2xl border-3 px-8 py-10 min-h-[180px] ${
+              className={`flex items-center justify-center rounded-2xl border-3 px-8 py-8 min-h-[120px] ${
                 record.busted
                   ? "bg-red-500/15 border-red-500 text-red-600 dark:text-red-400"
                   : "bg-zinc-100 border-zinc-300 text-zinc-700 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-300"
@@ -349,18 +342,14 @@ export function X01GameView({
               <span className="text-5xl font-bold">
                 {record.segment.name.toUpperCase()}
               </span>
-              <span className="text-3xl font-semibold text-zinc-500 dark:text-zinc-400 mt-3 min-h-[40px]">
-                {!record.busted && record.points}
-              </span>
             </div>
           ))}
           {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
             <div
               key={`empty-${i}`}
-              className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-10 text-3xl text-zinc-400 dark:border-zinc-700 min-h-[180px]"
+              className="flex items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-8 text-5xl text-zinc-400 dark:border-zinc-700 min-h-[120px]"
             >
-              <span className="text-5xl">—</span>
-              <span className="text-3xl mt-3 min-h-[40px]"></span>
+              —
             </div>
           ))}
         </div>
