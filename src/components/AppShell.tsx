@@ -34,7 +34,7 @@ export function AppShell() {
   });
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex h-screen flex-col">
       {view.screen === "playing" && (
         <header className="flex items-center justify-center border-b-2 border-zinc-200 px-6 py-5 dark:border-zinc-800">
           <BoardControls boardRunning={boardRunning} />
