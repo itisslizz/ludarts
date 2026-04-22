@@ -176,13 +176,14 @@ export const sqliteStatsStore: StatsStore = {
   getPlayerX01Stats(playerId: string) {
     const d = db();
 
-    // PPR: average points per visit (busted visits score 0)
+    // PPR: Points Per Round (3 darts) - busted visits score 0 and count as 3 darts
     const pprRow = d
       .prepare(
         `SELECT
-           SUM(CASE WHEN visit_bust = 0 THEN visit_score ELSE 0 END) * 1.0 / COUNT(*) AS ppr
+           SUM(CASE WHEN visit_bust = 0 THEN visit_score ELSE 0 END) * 3.0 / 
+           SUM(CASE WHEN visit_bust = 1 THEN 3 ELSE darts_thrown END) AS ppr
          FROM (
-           SELECT SUM(score) AS visit_score, MAX(is_bust) AS visit_bust
+           SELECT SUM(score) AS visit_score, MAX(is_bust) AS visit_bust, COUNT(*) AS darts_thrown
            FROM x01_darts
            WHERE player_id = ?
            GROUP BY game_id, visit_number
@@ -190,7 +191,7 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(playerId) as { ppr: number | null } | undefined;
 
-    // Win rate over last 100 finished games
+    // Win rate over last 100 finished multiplayer games (exclude single-player)
     const winRow = d
       .prepare(
         `SELECT
@@ -201,6 +202,7 @@ export const sqliteStatsStore: StatsStore = {
            FROM x01_games g2
            JOIN x01_game_players gp ON gp.game_id = g2.id
            WHERE gp.player_id = ? AND g2.finished_at IS NOT NULL
+             AND (SELECT COUNT(*) FROM x01_game_players WHERE game_id = g2.id) > 1
            ORDER BY g2.started_at DESC
            LIMIT 100
          ) g`,
@@ -238,13 +240,14 @@ export const sqliteStatsStore: StatsStore = {
            ORDER BY g2.started_at DESC LIMIT ${gameLimit}
          )`
       : "";
-    // PPR: average points per visit (busted visits score 0)
+    // PPR: Points Per Round (3 darts) - busted visits score 0 and count as 3 darts
     const pprRow = d
       .prepare(
         `SELECT
-           SUM(CASE WHEN visit_bust = 0 THEN visit_score ELSE 0 END) * 1.0 / COUNT(*) AS ppr
+           SUM(CASE WHEN visit_bust = 0 THEN visit_score ELSE 0 END) * 3.0 / 
+           SUM(CASE WHEN visit_bust = 1 THEN 3 ELSE darts_thrown END) AS ppr
          FROM (
-           SELECT SUM(score) AS visit_score, MAX(is_bust) AS visit_bust
+           SELECT SUM(score) AS visit_score, MAX(is_bust) AS visit_bust, COUNT(*) AS darts_thrown
            FROM x01_darts
            WHERE player_id = ? ${gameFilter}
            GROUP BY game_id, visit_number
@@ -252,7 +255,7 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(...dartParams) as { ppr: number | null } | undefined;
 
-    // Win rate
+    // Win rate (multiplayer games only)
     const winRow = d
       .prepare(
         `SELECT
@@ -263,6 +266,7 @@ export const sqliteStatsStore: StatsStore = {
            FROM x01_games g2
            JOIN x01_game_players gp ON gp.game_id = g2.id
            WHERE gp.player_id = ? AND g2.finished_at IS NOT NULL
+             AND (SELECT COUNT(*) FROM x01_game_players WHERE game_id = g2.id) > 1
            ORDER BY g2.started_at DESC
            ${gameLimit ? `LIMIT ${gameLimit}` : "LIMIT 100"}
          ) g`,

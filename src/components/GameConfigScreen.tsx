@@ -22,20 +22,20 @@ function X01Config({
   const [firstTo, setFirstTo] = useState<1 | 2 | 3>(1);
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-8 py-8">
-      <h1 className="text-3xl font-bold">X01 Setup</h1>
+    <div className="flex flex-1 flex-col items-center gap-12 py-12">
+      <h1 className="text-5xl font-bold">X01 Setup</h1>
 
       {/* Base score */}
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
           Starting Score
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-4">
           {([301, 501, 701] as const).map((score) => (
             <button
               key={score}
               onClick={() => setBaseScore(score)}
-              className={`rounded-lg px-6 py-3 text-lg font-semibold transition-colors ${
+              className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
                 baseScore === score
                   ? "bg-green-600 text-white"
                   : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -48,16 +48,16 @@ function X01Config({
       </div>
 
       {/* Out mode */}
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
           Out Mode
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-4">
           {(["double", "straight"] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => setOutMode(mode)}
-              className={`rounded-lg px-6 py-3 text-sm font-semibold capitalize transition-colors ${
+              className={`rounded-2xl px-10 py-5 text-2xl font-semibold capitalize transition-colors ${
                 outMode === mode
                   ? "bg-green-600 text-white"
                   : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -70,16 +70,16 @@ function X01Config({
       </div>
 
       {/* First to X legs */}
-      <div className="flex flex-col items-center gap-3">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
           Match Length
         </p>
-        <div className="flex gap-2">
+        <div className="flex gap-4">
           {([1, 2, 3] as const).map((legs) => (
             <button
               key={legs}
               onClick={() => setFirstTo(legs)}
-              className={`rounded-lg px-6 py-3 text-sm font-semibold transition-colors ${
+              className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
                 firstTo === legs
                   ? "bg-green-600 text-white"
                   : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
@@ -92,16 +92,16 @@ function X01Config({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-4">
+      <div className="flex gap-6">
         <button
           onClick={onBack}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
         >
           Back
         </button>
         <button
           onClick={() => onContinue({ baseScore, outMode, firstTo })}
-          className="rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-500"
+          className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500"
         >
           Next
         </button>

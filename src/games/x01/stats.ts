@@ -24,12 +24,15 @@ export function computeStats(
   targetScore: number,
 ): X01PlayerStats {
   const visits = player.visits;
-  const totalDarts = visits.reduce((sum, v) => sum + v.length, 0);
+  // Count darts: busted visits = 3 darts, otherwise actual darts thrown
+  const totalDarts = visits.reduce((sum, v) => {
+    const busted = isBustedVisit(v);
+    return sum + (busted ? 3 : v.length);
+  }, 0);
   const totalPoints = targetScore - player.score;
 
-  // PPR
-  const numVisits = visits.length;
-  const ppr = numVisits > 0 ? totalPoints / numVisits : 0;
+  // PPR (Points Per Round - 3 darts)
+  const ppr = totalDarts > 0 ? (totalPoints * 3) / totalDarts : 0;
 
   // First 9 darts PPR (first 3 visits)
   const first3Visits = visits.slice(0, 3);

@@ -12,19 +12,19 @@ export function ThemeSwitcher() {
   ];
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-3">
       {themes.map((t) => (
         <button
           key={t.value}
           onClick={() => setTheme(t.value)}
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 rounded-xl px-5 py-3 text-lg font-medium transition-colors ${
             theme === t.value
               ? "bg-green-600 text-white"
               : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-900/50 purple:text-purple-200 purple:hover:bg-purple-800/50"
           }`}
           title={t.label}
         >
-          <span>{t.icon}</span>
+          <span className="text-xl">{t.icon}</span>
           <span>{t.label}</span>
         </button>
       ))}

@@ -48,12 +48,12 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-6 py-8">
-      <h1 className="text-3xl font-bold">Players</h1>
+    <div className="flex flex-1 flex-col items-center gap-8 py-8">
+      <h1 className="text-5xl font-bold">Players</h1>
 
-      <div className="flex w-full max-w-md flex-col gap-2">
+      <div className="flex w-full max-w-2xl flex-col gap-3">
         {players.length === 0 && (
-          <p className="py-4 text-center text-sm text-zinc-400 dark:text-zinc-500">
+          <p className="py-6 text-center text-lg text-zinc-400 dark:text-zinc-500">
             No players yet — add one below
           </p>
         )}
@@ -63,12 +63,12 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
             <div
               key={player.id}
               onClick={() => onSelectPlayer(player.id)}
-              className="flex cursor-pointer items-center gap-3 rounded-lg border border-zinc-200 px-4 py-3 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+              className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-200 px-6 py-5 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
             >
               <div className="flex-1">
-                <span className="font-medium">{player.name}</span>
+                <span className="text-xl font-medium">{player.name}</span>
                 {s && s.legsPlayed > 0 ? (
-                  <div className="mt-1 flex gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+                  <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400">
                     <span>
                       PPR{" "}
                       <span className="font-semibold text-zinc-700 dark:text-zinc-200">
@@ -89,25 +89,25 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
                     </span>
                   </div>
                 ) : (
-                  <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="mt-2 text-base text-zinc-400 dark:text-zinc-500">
                     No legs played
                   </p>
                 )}
               </div>
               {confirmingDelete === player.id ? (
-                <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => {
                       handleDelete(player.id);
                       setConfirmingDelete(null);
                     }}
-                    className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white transition-colors hover:bg-red-500"
+                    className="rounded-lg bg-red-600 px-4 py-2 text-base font-medium text-white transition-colors hover:bg-red-500"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setConfirmingDelete(null)}
-                    className="rounded bg-zinc-200 px-2 py-1 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                    className="rounded-lg bg-zinc-200 px-4 py-2 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
                   >
                     Cancel
                   </button>
@@ -115,7 +115,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
               ) : (
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmingDelete(player.id); }}
-                  className="text-zinc-400 transition-colors hover:text-red-500"
+                  className="text-2xl text-zinc-400 transition-colors hover:text-red-500"
                 >
                   ✕
                 </button>
@@ -127,47 +127,47 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
 
       <form
         onSubmit={handleAddPlayer}
-        className="flex w-full max-w-md gap-2"
+        className="flex w-full max-w-2xl gap-3"
       >
         <input
           type="text"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Player name"
-          className="flex-1 rounded-lg border border-zinc-200 bg-transparent px-4 py-2 text-sm outline-none focus:border-zinc-400 dark:border-zinc-700 dark:focus:border-zinc-500"
+          className="flex-1 rounded-xl border-2 border-zinc-200 bg-transparent px-6 py-4 text-lg outline-none focus:border-zinc-400 dark:border-zinc-700 dark:focus:border-zinc-500"
         />
         <button
           type="submit"
           disabled={!newName.trim()}
-          className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="rounded-xl bg-zinc-200 px-6 py-4 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           Add
         </button>
       </form>
 
-      <div className="flex w-full max-w-md flex-col gap-3">
+      <div className="flex w-full max-w-2xl flex-col gap-4">
         {confirmingDeleteAll ? (
-          <div className="flex flex-col gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
-            <p className="text-sm font-medium text-red-900 dark:text-red-200">
+          <div className="flex flex-col gap-3 rounded-xl border-2 border-red-300 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950">
+            <p className="text-lg font-medium text-red-900 dark:text-red-200">
               Delete all stats for all players?
             </p>
-            <p className="text-xs text-red-700 dark:text-red-300">
+            <p className="text-base text-red-700 dark:text-red-300">
               This will permanently delete all game history, throws, and statistics. Players themselves will not be deleted.
             </p>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-3 flex gap-3">
               <button
                 onClick={async () => {
                   await fetch("/api/stats/players", { method: "DELETE" });
                   setConfirmingDeleteAll(false);
                   await fetchStats();
                 }}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500"
+                className="flex-1 rounded-xl bg-red-600 px-6 py-4 text-lg font-semibold text-white transition-colors hover:bg-red-500"
               >
                 Confirm Delete
               </button>
               <button
                 onClick={() => setConfirmingDeleteAll(false)}
-                className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className="flex-1 rounded-xl border-2 border-zinc-300 bg-white px-6 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
               >
                 Cancel
               </button>
@@ -176,7 +176,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
         ) : (
           <button
             onClick={() => setConfirmingDeleteAll(true)}
-            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+            className="rounded-xl border-2 border-red-300 px-6 py-4 text-lg font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
           >
             Delete All Stats
           </button>
@@ -185,7 +185,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
 
       <button
         onClick={onBack}
-        className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
       >
         Back
       </button>

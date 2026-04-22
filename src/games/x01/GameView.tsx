@@ -21,7 +21,7 @@ interface X01GameViewProps {
 function ThrowBadge({ record }: { record: X01ThrowRecord }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-sm font-medium ${
+      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-lg font-medium ${
         record.busted
           ? "bg-red-500/15 text-red-600 dark:text-red-400"
           : "bg-zinc-200/50 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
@@ -29,7 +29,7 @@ function ThrowBadge({ record }: { record: X01ThrowRecord }) {
     >
       {record.segment.name.toUpperCase()}
       {!record.busted && (
-        <span className="text-xs text-zinc-400">({record.points})</span>
+        <span className="text-base text-zinc-400">({record.points})</span>
       )}
     </span>
   );
@@ -43,7 +43,7 @@ function VisitHistory({
   playerName?: string;
 }) {
   return (
-    <div className="flex w-full flex-col gap-1">
+    <div className="flex w-full flex-col gap-2">
       {[...visits].reverse().map((visit, ri) => {
         const visitIndex = visits.length - 1 - ri;
         const busted = visit.some((t) => t.busted);
@@ -52,10 +52,10 @@ function VisitHistory({
         return (
           <div
             key={visitIndex}
-            className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-900"
+            className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900"
           >
             {playerName && (
-              <span className="w-16 truncate text-xs font-medium text-zinc-400 dark:text-zinc-500">
+              <span className="w-20 truncate text-base font-medium text-zinc-400 dark:text-zinc-500">
                 {playerName}
               </span>
             )}
@@ -65,7 +65,7 @@ function VisitHistory({
               ))}
             </div>
             <span
-              className={`text-sm font-semibold ${
+              className={`text-lg font-semibold ${
                 busted
                   ? "text-red-500"
                   : "text-zinc-600 dark:text-zinc-400"
@@ -129,80 +129,80 @@ export function X01GameView({
     }));
 
     return (
-      <div className="flex flex-1 flex-col items-center gap-8 py-8">
+      <div className="flex flex-1 flex-col items-center gap-12 py-12">
         <div className="text-center">
-          <h1 className="text-4xl font-bold">
+          <h1 className="text-6xl font-bold">
             {state.winnerId ? `${playerName(state.winnerId)} wins!` : "Game Complete!"}
           </h1>
-          <p className="mt-2 text-lg text-zinc-500 dark:text-zinc-400">
+          <p className="mt-4 text-2xl text-zinc-500 dark:text-zinc-400">
             {state.targetScore} &middot; {state.outMode === "double" ? "Double Out" : "Straight Out"}
           </p>
         </div>
 
         {/* Player stats cards */}
-        <div className={`grid w-full max-w-5xl gap-4 ${
+        <div className={`grid w-full max-w-6xl gap-6 ${
           playerStats.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
         }`}>
           {playerStats.map(({ playerId, name, isWinner, stats }) => (
             <div
               key={playerId}
-              className={`rounded-xl px-6 py-5 ${
+              className={`rounded-2xl px-8 py-7 ${
                 isWinner
                   ? "bg-green-500/10 border-2 border-green-500"
                   : "bg-zinc-100 dark:bg-zinc-900"
               }`}
             >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-bold">{name}</span>
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-2xl font-bold">{name}</span>
                 {isWinner && (
-                  <span className="rounded-full bg-green-500 px-3 py-0.5 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-green-500 px-4 py-1 text-base font-semibold text-white">
                     Winner
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-y-4 gap-x-6 text-center">
+              <div className="grid grid-cols-3 gap-y-6 gap-x-8 text-center">
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.ppr.toFixed(1)}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">PPR</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.ppr.toFixed(1)}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">PPR</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.first9Ppr.toFixed(1)}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">First 9 PPR</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.first9Ppr.toFixed(1)}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">First 9 PPR</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.checkoutRate}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Checkout</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.checkoutRate}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">Checkout</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.visits60}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">60+</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits60}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">60+</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.visits100}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">100+</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits100}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">100+</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.visits140}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">140+</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits140}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">140+</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.visits180}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">180s</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits180}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">180s</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold tabular-nums">{stats.totalDarts}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Darts</p>
+                  <p className="text-3xl font-bold tabular-nums">{stats.totalDarts}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">Darts</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-6">
           <button
             onClick={onQuit}
-            className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             Home
           </button>
@@ -211,7 +211,7 @@ export function X01GameView({
               reset();
               onPlayAgain();
             }}
-            className="rounded-full bg-green-600 px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+            className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
           >
             Play Again
           </button>
@@ -243,20 +243,20 @@ export function X01GameView({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-6 py-6">
-      <div className="flex w-full max-w-5xl items-center justify-between">
+    <div className="flex flex-1 flex-col items-center gap-8 py-8">
+      <div className="flex w-full max-w-6xl items-center justify-between">
         <button
           onClick={onQuit}
-          className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-xl border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
         >
           Quit
         </button>
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xl text-zinc-500 dark:text-zinc-400">
             {state.outMode === "double" ? "Double Out" : "Straight Out"}
           </p>
           {state.firstTo > 1 && (
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-base text-zinc-400 dark:text-zinc-500">
               Leg {state.currentLeg} • First to {state.firstTo}
             </p>
           )}
@@ -264,13 +264,24 @@ export function X01GameView({
       </div>
 
       {/* Scoreboard */}
-      <div className={`grid w-full max-w-5xl gap-2 ${
+      <div className={`grid w-full max-w-6xl gap-4 ${
         isMultiplayer ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-1"
       }`}>
         {state.players.map((ps, i) => {
-          const totalDarts = ps.visits.reduce((sum, v) => sum + v.length, 0);
+          // Calculate total darts: busted visits = 3, otherwise actual count
+          let totalDarts = ps.visits.reduce((sum, v) => {
+            const busted = v.some((t) => t.busted);
+            return sum + (busted ? 3 : v.length);
+          }, 0);
+          
+          // For current player, include current visit darts (not busted yet)
+          const isCurrentPlayer = i === state.currentPlayerIndex;
+          if (isCurrentPlayer && state.currentVisit.length > 0 && !visitHasBust) {
+            totalDarts += state.currentVisit.length;
+          }
+          
           const totalPoints = state.targetScore - ps.score;
-          const ppr = totalDarts > 0 ? (totalPoints / (totalDarts / 3)).toFixed(1) : "—";
+          const ppr = totalDarts > 0 ? ((totalPoints * 3) / totalDarts).toFixed(1) : "—";
           const lastVisit = ps.visits.length > 0 ? ps.visits[ps.visits.length - 1] : null;
           const lastVisitHasBust = lastVisit?.some((t) => t.busted) ?? false;
           const lastVisitScore = lastVisit
@@ -278,37 +289,36 @@ export function X01GameView({
             : null;
           
           // Show visit total for current player (0 if busted)
-          const isCurrentPlayer = i === state.currentPlayerIndex;
           const showVisitTotal = isCurrentPlayer && visitTotal > 0;
 
           return (
             <div
               key={ps.playerId}
-              className={`flex flex-col items-center rounded-lg px-4 py-3 ${
+              className={`flex flex-col items-center rounded-2xl px-6 py-5 ${
                 isCurrentPlayer
                   ? "bg-yellow-400/15 border-2 border-yellow-400"
                   : "bg-zinc-100 dark:bg-zinc-900"
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400 truncate text-center">
+                <span className="text-lg font-medium text-zinc-500 dark:text-zinc-400 truncate text-center">
                   {playerName(ps.playerId)}
                 </span>
                 {state.firstTo > 1 && ps.legsWon > 0 && (
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-500">
+                  <span className="text-base font-semibold text-green-600 dark:text-green-500">
                     ({ps.legsWon})
                   </span>
                 )}
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold tabular-nums">{ps.score}</span>
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-bold tabular-nums">{ps.score}</span>
                 {showVisitTotal && (
-                  <span className="text-xl font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums">
+                  <span className="text-3xl font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums">
                     {visitTotal}
                   </span>
                 )}
               </div>
-              <div className="flex gap-3 mt-1 text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">
+              <div className="flex gap-4 mt-2 text-base text-zinc-400 dark:text-zinc-500 tabular-nums">
                 <span>Last: {lastVisitScore !== null ? lastVisitScore : "—"}</span>
                 <span>PPR: {ppr}</span>
               </div>
@@ -319,27 +329,27 @@ export function X01GameView({
 
       {/* Current player & visit */}
       {isMultiplayer && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="text-xl text-zinc-500 dark:text-zinc-400">
           {playerName(currentPlayer.playerId)}&apos;s turn
         </p>
       )}
 
       {/* Current visit - Large display */}
-      <div className="w-full max-w-5xl">
-        <div className="grid grid-cols-3 gap-3">
+      <div className="w-full max-w-6xl">
+        <div className="grid grid-cols-3 gap-4">
           {state.currentVisit.map((record, i) => (
             <div
               key={i}
-              className={`flex flex-col items-center justify-center rounded-xl border-2 px-6 py-8 min-h-[140px] ${
+              className={`flex flex-col items-center justify-center rounded-2xl border-3 px-8 py-10 min-h-[180px] ${
                 record.busted
                   ? "bg-red-500/15 border-red-500 text-red-600 dark:text-red-400"
                   : "bg-zinc-100 border-zinc-300 text-zinc-700 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-300"
               }`}
             >
-              <span className="text-4xl font-bold">
+              <span className="text-5xl font-bold">
                 {record.segment.name.toUpperCase()}
               </span>
-              <span className="text-2xl font-semibold text-zinc-500 dark:text-zinc-400 mt-2 min-h-[32px]">
+              <span className="text-3xl font-semibold text-zinc-500 dark:text-zinc-400 mt-3 min-h-[40px]">
                 {!record.busted && record.points}
               </span>
             </div>
@@ -347,38 +357,38 @@ export function X01GameView({
           {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
             <div
               key={`empty-${i}`}
-              className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 px-6 py-8 text-2xl text-zinc-400 dark:border-zinc-700 min-h-[140px]"
+              className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-10 text-3xl text-zinc-400 dark:border-zinc-700 min-h-[180px]"
             >
-              <span className="text-4xl">—</span>
-              <span className="text-2xl mt-2 min-h-[32px]"></span>
+              <span className="text-5xl">—</span>
+              <span className="text-3xl mt-3 min-h-[40px]"></span>
             </div>
           ))}
         </div>
         
         {/* Bust message */}
         {state.busted && (
-          <div className="flex justify-center mt-4">
-            <span className="text-2xl font-bold text-red-500">BUST</span>
+          <div className="flex justify-center mt-6">
+            <span className="text-3xl font-bold text-red-500">BUST</span>
           </div>
         )}
       </div>
 
       {state.waitingForTakeout ? (
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-sm font-semibold text-yellow-500 animate-pulse">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl font-semibold text-yellow-500 animate-pulse">
             Waiting for takeout...
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-4">
             <button
               onClick={undo}
               disabled={!canUndo}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               Undo
             </button>
             <button
               onClick={endTurn}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               Next Player
             </button>
@@ -390,7 +400,7 @@ export function X01GameView({
           <button
             onClick={undo}
             disabled={!canUndo}
-            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             Undo
           </button>
@@ -401,18 +411,18 @@ export function X01GameView({
       )}
 
       {/* Visit history */}
-      <div className="w-full max-w-5xl overflow-y-auto max-h-48">
+      <div className="w-full max-w-6xl overflow-y-auto max-h-64">
         {isMultiplayer ? (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             {[...allVisits].reverse().map((entry, i) => {
               const busted = entry.visit.some((t) => t.busted);
               const visitTotal = busted ? 0 : entry.visit.reduce((s, t) => s + t.points, 0);
               return (
                 <div
                   key={allVisits.length - 1 - i}
-                  className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-1.5 dark:bg-zinc-900"
+                  className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900"
                 >
-                  <span className="w-16 truncate text-xs font-medium text-zinc-400 dark:text-zinc-500">
+                  <span className="w-20 truncate text-base font-medium text-zinc-400 dark:text-zinc-500">
                     {playerName(entry.playerId)}
                   </span>
                   <div className="flex flex-1 gap-2">
@@ -421,7 +431,7 @@ export function X01GameView({
                     ))}
                   </div>
                   <span
-                    className={`text-sm font-semibold ${
+                    className={`text-lg font-semibold ${
                       busted ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
                     }`}
                   >

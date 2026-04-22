@@ -41,16 +41,16 @@ export function BoardControls({ boardRunning }: BoardControlsProps) {
         : "text-red-500";
 
   return (
-    <div className="flex items-center gap-4">
-      <span className={`text-sm font-medium ${statusColor}`}>
+    <div className="flex items-center gap-6">
+      <span className={`text-lg font-medium ${statusColor}`}>
         {statusLabel}
       </span>
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         {boardRunning ? (
           <button
             onClick={() => handleAction("stop", "PUT")}
             disabled={busy !== null}
-            className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className="rounded-lg bg-zinc-200 px-6 py-3 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
           >
             {busy === "stop" ? "Stopping…" : "Stop Board"}
           </button>
@@ -58,7 +58,7 @@ export function BoardControls({ boardRunning }: BoardControlsProps) {
           <button
             onClick={() => handleAction("start", "PUT")}
             disabled={busy !== null || boardRunning === null}
-            className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-500 disabled:opacity-50"
+            className="rounded-lg bg-green-600 px-6 py-3 text-lg font-medium text-white transition-colors hover:bg-green-500 disabled:opacity-50"
           >
             {busy === "start" ? "Starting…" : "Start Board"}
           </button>
@@ -66,7 +66,7 @@ export function BoardControls({ boardRunning }: BoardControlsProps) {
         <button
           onClick={() => handleAction("reset", "POST")}
           disabled={busy !== null || boardRunning === null}
-          className="rounded-lg bg-zinc-200 px-4 py-2 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="rounded-lg bg-zinc-200 px-6 py-3 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
         >
           {busy === "reset" ? "Resetting…" : "Reset Board"}
         </button>

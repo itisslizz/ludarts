@@ -36,12 +36,12 @@ export function AppShell() {
   return (
     <div className="flex min-h-full flex-col">
       {view.screen === "playing" && (
-        <header className="flex items-center justify-center border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+        <header className="flex items-center justify-center border-b-2 border-zinc-200 px-6 py-5 dark:border-zinc-800">
           <BoardControls boardRunning={boardRunning} />
         </header>
       )}
 
-      <main className="flex flex-1 flex-col px-4 py-6">
+      <main className="flex flex-1 flex-col px-6 py-8">
         {view.screen === "home" && (
           <HomeScreen onSelectGame={selectGame} onManagePlayers={goPlayers} />
         )}
