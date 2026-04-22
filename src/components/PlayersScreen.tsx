@@ -6,7 +6,7 @@ import { usePlayerStore } from "@/hooks/usePlayerStore";
 interface PlayerStats {
   ppr: number | null;
   winRate: number | null;
-  gamesPlayed: number;
+  legsPlayed: number;
 }
 
 interface PlayersScreenProps {
@@ -19,6 +19,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
   const [newName, setNewName] = useState("");
   const [stats, setStats] = useState<Record<string, PlayerStats>>({});
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [confirmingDeleteAll, setConfirmingDeleteAll] = useState(false);
 
   const fetchStats = useCallback(async () => {
     const res = await fetch("/api/stats/players");
@@ -66,7 +67,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
             >
               <div className="flex-1">
                 <span className="font-medium">{player.name}</span>
-                {s && s.gamesPlayed > 0 ? (
+                {s && s.legsPlayed > 0 ? (
                   <div className="mt-1 flex gap-4 text-xs text-zinc-500 dark:text-zinc-400">
                     <span>
                       PPR{" "}
@@ -81,15 +82,15 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
                       </span>
                     </span>
                     <span>
-                      Games{" "}
+                      Legs{" "}
                       <span className="font-semibold text-zinc-700 dark:text-zinc-200">
-                        {s.gamesPlayed}
+                        {s.legsPlayed}
                       </span>
                     </span>
                   </div>
                 ) : (
                   <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                    No games played
+                    No legs played
                   </p>
                 )}
               </div>
@@ -143,6 +144,44 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
           Add
         </button>
       </form>
+
+      <div className="flex w-full max-w-md flex-col gap-3">
+        {confirmingDeleteAll ? (
+          <div className="flex flex-col gap-2 rounded-lg border-2 border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+            <p className="text-sm font-medium text-red-900 dark:text-red-200">
+              Delete all stats for all players?
+            </p>
+            <p className="text-xs text-red-700 dark:text-red-300">
+              This will permanently delete all game history, throws, and statistics. Players themselves will not be deleted.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={async () => {
+                  await fetch("/api/stats/players", { method: "DELETE" });
+                  setConfirmingDeleteAll(false);
+                  await fetchStats();
+                }}
+                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500"
+              >
+                Confirm Delete
+              </button>
+              <button
+                onClick={() => setConfirmingDeleteAll(false)}
+                className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingDeleteAll(true)}
+            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
+          >
+            Delete All Stats
+          </button>
+        )}
+      </div>
 
       <button
         onClick={onBack}

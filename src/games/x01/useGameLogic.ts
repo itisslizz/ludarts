@@ -59,15 +59,22 @@ function isBust(
 }
 
 function startNewLeg(state: X01State, completedLegData: X01LegData): X01State {
+  // Rotate playerIds: move first player to the back
+  const rotatedPlayerIds = [...state.playerIds.slice(1), state.playerIds[0]];
+  
+  // Rotate players array to match the new order
+  const rotatedPlayers = [...state.players.slice(1), state.players[0]].map((p) => ({
+    ...p,
+    score: state.targetScore,
+    scoreAtVisitStart: state.targetScore,
+    visits: [],
+  }));
+
   return {
     ...state,
     phase: "playing",
-    players: state.players.map((p) => ({
-      ...p,
-      score: state.targetScore,
-      scoreAtVisitStart: state.targetScore,
-      visits: [],
-    })),
+    playerIds: rotatedPlayerIds,
+    players: rotatedPlayers,
     currentPlayerIndex: 0,
     currentVisit: [],
     throwCount: 0,

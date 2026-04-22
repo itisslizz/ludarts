@@ -207,12 +207,12 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(playerId, playerId) as { total: number; wins: number } | undefined;
 
-    const gamesPlayed = winRow?.total ?? 0;
+    const legsPlayed = winRow?.total ?? 0;
 
     return {
       ppr: pprRow?.ppr ?? null,
-      winRate: gamesPlayed > 0 ? ((winRow!.wins / gamesPlayed) * 100) : null,
-      gamesPlayed,
+      winRate: legsPlayed > 0 ? ((winRow!.wins / legsPlayed) * 100) : null,
+      legsPlayed,
     };
   },
 
@@ -269,7 +269,7 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(playerId, playerId) as { total: number; wins: number } | undefined;
 
-    const gamesPlayed = winRow?.total ?? 0;
+    const legsPlayed = winRow?.total ?? 0;
 
     // Total darts thrown
     const dartCountRow = d
@@ -464,8 +464,8 @@ export const sqliteStatsStore: StatsStore = {
       ppr: pprRow?.ppr ?? null,
       first9Ppr: first9Row?.ppr ?? null,
       scoringPpr: scoringVisitCount > 0 ? (scoringVisitPoints / scoringVisitCount) : null,
-      winRate: gamesPlayed > 0 ? ((winRow!.wins / gamesPlayed) * 100) : null,
-      gamesPlayed,
+      winRate: legsPlayed > 0 ? ((winRow!.wins / legsPlayed) * 100) : null,
+      legsPlayed,
       totalDarts: dartCountRow.cnt,
       highestVisit: highVisitRow?.best ?? null,
       checkoutRate: totalCheckoutAttempts > 0
@@ -488,15 +488,12 @@ export const sqliteStatsStore: StatsStore = {
     };
   },
 
-  clearPlayerStats(playerId: string) {
+  clearAllStats() {
     const d = db();
     const tx = d.transaction(() => {
-      d.prepare("DELETE FROM x01_darts WHERE player_id = ?").run(playerId);
-      d.prepare("DELETE FROM x01_game_players WHERE player_id = ?").run(playerId);
-      // Remove games where this player was the only participant
-      d.prepare(
-        `DELETE FROM x01_games WHERE id NOT IN (SELECT DISTINCT game_id FROM x01_game_players)`,
-      ).run();
+      d.prepare("DELETE FROM x01_darts").run();
+      d.prepare("DELETE FROM x01_game_players").run();
+      d.prepare("DELETE FROM x01_games").run();
     });
     tx();
   },

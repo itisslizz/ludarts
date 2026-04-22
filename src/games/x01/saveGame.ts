@@ -59,10 +59,3 @@ export async function saveX01Leg(
     body: JSON.stringify({ game, players, darts }),
   });
 }
-
-export async function saveX01Game(state: X01State): Promise<void> {
-  // Save all completed legs
-  for (const legData of state.completedLegs) {
-    await saveX01Leg(legData, state);
-  }
-}

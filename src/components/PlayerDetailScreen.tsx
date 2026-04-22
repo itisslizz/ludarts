@@ -27,7 +27,6 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [gameLimit, setGameLimit] = useState<number>(0);
-  const [confirmClear, setConfirmClear] = useState(false);
   const [showCheckouts, setShowCheckouts] = useState(false);
   const [showPpr, setShowPpr] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -209,7 +208,7 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         <StatCard label="First 9 PPR" value={stats.first9Ppr != null ? stats.first9Ppr.toFixed(1) : "—"} onClick={() => setShowPpr(true)} />
         <StatCard label="Scoring PPR" value={stats.scoringPpr != null ? stats.scoringPpr.toFixed(1) : "—"} onClick={() => setShowPpr(true)} />
         <StatCard label="Win Rate" value={stats.winRate != null ? `${stats.winRate.toFixed(0)}%` : "—"} />
-        <StatCard label="Games" value={String(stats.gamesPlayed)} />
+        <StatCard label="Legs" value={String(stats.legsPlayed)} />
         <StatCard label="Total Darts" value={String(stats.totalDarts)} />
         <StatCard label="Best Visit" value={stats.highestVisit != null ? String(stats.highestVisit) : "—"} />
         <StatCard label="Checkout %" value={stats.checkoutRate != null ? `${stats.checkoutRate.toFixed(0)}%` : "—"} onClick={() => setShowCheckouts(true)} />
@@ -228,11 +227,11 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         </div>
       )}
 
-      {/* Recent games */}
+      {/* Recent legs */}
       {stats.recentGames.length > 0 && (
         <div className="w-full max-w-md">
           <h2 className="mb-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-            Recent Games
+            Recent Legs
           </h2>
           <div className="flex flex-col gap-1">
             {stats.recentGames.map((g) => (
@@ -265,35 +264,6 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         >
           Back
         </button>
-        {confirmClear ? (
-          <div className="flex gap-2">
-            <button
-              onClick={async () => {
-                await fetch(`/api/stats/players/${playerId}`, { method: "DELETE" });
-                setConfirmClear(false);
-                const params = gameLimit ? `?games=${gameLimit}` : "";
-                const res = await fetch(`/api/stats/players/${playerId}${params}`);
-                if (res.ok) setData(await res.json());
-              }}
-              className="rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-500"
-            >
-              Confirm
-            </button>
-            <button
-              onClick={() => setConfirmClear(false)}
-              className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmClear(true)}
-            className="rounded-full border border-red-300 px-6 py-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-          >
-            Clear Stats
-          </button>
-        )}
       </div>
     </div>
   );

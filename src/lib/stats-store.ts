@@ -17,9 +17,9 @@ export interface StatsStore {
   getX01DartsForGame(gameId: string): DbX01Dart[];
 
   // Stats
-  getPlayerX01Stats(playerId: string): { ppr: number | null; winRate: number | null; gamesPlayed: number };
+  getPlayerX01Stats(playerId: string): { ppr: number | null; winRate: number | null; legsPlayed: number };
   getPlayerDetailStats(playerId: string, gameLimit?: number): PlayerDetailStats;
-  clearPlayerStats(playerId: string): void;
+  clearAllStats(): void;
 }
 
 export interface CheckoutDetail {
@@ -33,7 +33,7 @@ export interface PlayerDetailStats {
   first9Ppr: number | null;
   scoringPpr: number | null;
   winRate: number | null;
-  gamesPlayed: number;
+  legsPlayed: number;
   totalDarts: number;
   highestVisit: number | null;
   checkoutRate: number | null;

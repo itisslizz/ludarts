@@ -17,12 +17,3 @@ export async function GET(
   const stats = sqliteStatsStore.getPlayerDetailStats(id, gameLimit || undefined);
   return Response.json({ player, stats });
 }
-
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const { id } = await params;
-  sqliteStatsStore.clearPlayerStats(id);
-  return Response.json({ ok: true });
-}

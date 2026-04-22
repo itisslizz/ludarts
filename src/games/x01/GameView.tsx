@@ -3,7 +3,7 @@
 import { useRef, useEffect } from "react";
 import { useX01GameLogic } from "./useGameLogic";
 import { computeStats } from "./stats";
-import { saveX01Game, saveX01Leg } from "./saveGame";
+import { saveX01Leg } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
@@ -91,7 +91,6 @@ export function X01GameView({
 }: X01GameViewProps) {
   const { state, registerThrow, endTurn, undo, reset } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
-  const savedRef = useRef(false);
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
 
@@ -117,17 +116,6 @@ export function X01GameView({
       savedLegsRef.current = state.completedLegs.length;
     }
   }, [state.completedLegs.length, state]);
-
-  // Save completed game to DB (for final cleanup/verification)
-  useEffect(() => {
-    if (state.phase === "complete" && !savedRef.current) {
-      savedRef.current = true;
-      saveX01Game(state).catch(() => {});
-    }
-    if (state.phase === "playing") {
-      savedRef.current = false;
-    }
-  }, [state.phase, state]);
 
   const playerName = (id: string) =>
     allPlayers.find((p) => p.id === id)?.name ?? "Unknown";
