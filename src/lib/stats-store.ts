@@ -14,6 +14,7 @@ export interface StatsStore {
     darts: Omit<DbX01Dart, "id">[],
   ): void;
   getX01GamesForPlayer(playerId: string): DbX01Game[];
+  getX01GamePlayers(gameId: string): DbX01GamePlayer[];
   getX01DartsForGame(gameId: string): DbX01Dart[];
 
   // Stats

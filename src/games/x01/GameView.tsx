@@ -301,7 +301,10 @@ export function X01GameView({
         <div className={`grid w-full max-w-6xl gap-6 ${
           playerStats.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
         }`}>
-          {playerStats.map(({ playerId, name, isWinner, stats }) => (
+          {playerStats.map(({ playerId, name, isWinner, stats }) => {
+            const eloInfo = playerEloData.find(p => p.playerId === playerId);
+            
+            return (
             <div
               key={playerId}
               className={`rounded-2xl px-8 py-7 ${
@@ -311,7 +314,33 @@ export function X01GameView({
               }`}
             >
               <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-bold">{name}</span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-2xl font-bold">{name}</span>
+                  {eloInfo && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {eloInfo.eloChange !== null && eloInfo.eloChange !== 0 && (
+                        <>
+                          <span className="text-base font-medium text-zinc-500 dark:text-zinc-400">
+                            {eloInfo.eloRating - eloInfo.eloChange}
+                          </span>
+                          <span className="text-base text-zinc-400 dark:text-zinc-500">→</span>
+                        </>
+                      )}
+                      <span className="rounded-lg bg-blue-500/15 px-3 py-1 text-base font-bold text-blue-600 dark:text-blue-400">
+                        {eloInfo.eloRating}
+                      </span>
+                      {eloInfo.eloChange !== null && eloInfo.eloChange !== 0 && (
+                        <span className={`text-base font-semibold ${
+                          eloInfo.eloChange > 0 
+                            ? "text-green-600 dark:text-green-400" 
+                            : "text-red-600 dark:text-red-400"
+                        }`}>
+                          ({eloInfo.eloChange > 0 ? "+" : ""}{eloInfo.eloChange})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {isWinner && (
                   <span className="rounded-full bg-green-500 px-4 py-1 text-base font-semibold text-white">
                     Winner
@@ -354,7 +383,8 @@ export function X01GameView({
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         <div className="flex gap-6">

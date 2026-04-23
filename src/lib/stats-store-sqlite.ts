@@ -231,6 +231,14 @@ export const sqliteStatsStore: StatsStore = {
     tx();
   },
 
+  getX01GamePlayers(gameId: string): DbX01GamePlayer[] {
+    return db()
+      .prepare(
+        "SELECT * FROM x01_game_players WHERE game_id = ?"
+      )
+      .all(gameId) as DbX01GamePlayer[];
+  },
+
   getX01GamesForPlayer(playerId: string) {
     return db()
       .prepare(
