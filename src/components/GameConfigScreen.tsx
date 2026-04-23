@@ -22,89 +22,95 @@ function X01Config({
   const [firstTo, setFirstTo] = useState<1 | 2 | 3>(1);
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-12 py-12">
-      <h1 className="text-5xl font-bold">X01 Setup</h1>
-
-      {/* Base score */}
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
-          Starting Score
-        </p>
-        <div className="flex gap-4">
-          {([301, 501, 701] as const).map((score) => (
-            <button
-              key={score}
-              onClick={() => setBaseScore(score)}
-              className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
-                baseScore === score
-                  ? "bg-green-600 text-white"
-                  : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              {score}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Out mode */}
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
-          Out Mode
-        </p>
-        <div className="flex gap-4">
-          {(["double", "straight"] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setOutMode(mode)}
-              className={`rounded-2xl px-10 py-5 text-2xl font-semibold capitalize transition-colors ${
-                outMode === mode
-                  ? "bg-green-600 text-white"
-                  : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              {mode} Out
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* First to X legs */}
-      <div className="flex flex-col items-center gap-4">
-        <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
-          Match Length
-        </p>
-        <div className="flex gap-4">
-          {([1, 2, 3] as const).map((legs) => (
-            <button
-              key={legs}
-              onClick={() => setFirstTo(legs)}
-              className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
-                firstTo === legs
-                  ? "bg-green-600 text-white"
-                  : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-              }`}
-            >
-              First to {legs}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-6">
+    <div className="flex flex-col h-full w-full">
+      {/* Top Bar with Actions */}
+      <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 border-b-2 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 purple:border-purple-900 purple:bg-purple-950">
         <button
           onClick={onBack}
-          className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-xl border-2 border-zinc-300 px-8 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
         >
           Back
         </button>
+        
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">X01 Setup</h1>
+        </div>
+        
         <button
           onClick={() => onContinue({ baseScore, outMode, firstTo })}
-          className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500"
+          className="rounded-xl bg-green-600 px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-green-500"
         >
           Next
         </button>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8 overflow-y-auto">
+        {/* Base score */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
+            Starting Score
+          </p>
+          <div className="flex gap-4">
+            {([301, 501, 701] as const).map((score) => (
+              <button
+                key={score}
+                onClick={() => setBaseScore(score)}
+                className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
+                  baseScore === score
+                    ? "bg-green-600 text-white"
+                    : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-700 purple:text-purple-200 purple:hover:bg-purple-600"
+                }`}
+              >
+                {score}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Out mode */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
+            Out Mode
+          </p>
+          <div className="flex gap-4">
+            {(["double", "straight"] as const).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setOutMode(mode)}
+                className={`rounded-2xl px-10 py-5 text-2xl font-semibold capitalize transition-colors ${
+                  outMode === mode
+                    ? "bg-green-600 text-white"
+                    : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-700 purple:text-purple-200 purple:hover:bg-purple-600"
+                }`}
+              >
+                {mode} Out
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* First to X legs */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
+            Match Length
+          </p>
+          <div className="flex gap-4">
+            {([1, 2, 3] as const).map((legs) => (
+              <button
+                key={legs}
+                onClick={() => setFirstTo(legs)}
+                className={`rounded-2xl px-10 py-5 text-2xl font-semibold transition-colors ${
+                  firstTo === legs
+                    ? "bg-green-600 text-white"
+                    : "bg-zinc-200 text-zinc-800 hover:bg-zinc-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-700 purple:text-purple-200 purple:hover:bg-purple-600"
+                }`}
+              >
+                First to {legs}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

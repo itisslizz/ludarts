@@ -68,7 +68,7 @@ export function ScorePicker({ onSelect }: ScorePickerProps) {
           multiplier={1}
           onSelect={onSelect}
           label="Single"
-          btnClass="bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+          btnClass="bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 purple:bg-purple-900 purple:hover:bg-purple-800"
         />
         <NumberGrid
           multiplier={2}
@@ -100,7 +100,7 @@ export function ScorePicker({ onSelect }: ScorePickerProps) {
         </button>
         <button
           onClick={() => onSelect(missSegment)}
-          className="flex-1 rounded-lg bg-zinc-200 py-6 text-center text-xl font-semibold text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600"
+          className="flex-1 rounded-lg bg-zinc-200 py-6 text-center text-xl font-semibold text-zinc-600 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-600 purple:bg-purple-800 purple:text-purple-300 purple:hover:bg-purple-700"
         >
           Miss
         </button>

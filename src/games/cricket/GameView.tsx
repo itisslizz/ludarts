@@ -132,7 +132,7 @@ export function CricketGameView({
             return (
               <div
                 key={i}
-                className={`flex flex-col items-center justify-center rounded-2xl border-3 px-8 py-10 min-h-[180px] ${
+                className={`flex flex-col items-center justify-center rounded-2xl border-3 px-8 py-10 min-h-[140px] ${
                   hasEffect
                     ? "bg-green-500/15 border-green-500 text-green-700 dark:text-green-400"
                     : "bg-zinc-100 border-zinc-300 text-zinc-500 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-500"
@@ -141,25 +141,23 @@ export function CricketGameView({
                 <span className="text-5xl font-bold">
                   {record.segment.name.toUpperCase()}
                 </span>
-                <span className="text-3xl font-semibold text-green-600 dark:text-green-400 mt-3 min-h-[40px]">
-                  {record.pointsScored > 0 && `+${record.pointsScored}`}
-                </span>
               </div>
             );
           })}
           {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
             <div
               key={`empty-${i}`}
-              className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-10 text-3xl text-zinc-400 dark:border-zinc-700 min-h-[180px]"
+              className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-10 text-3xl text-zinc-400 dark:border-zinc-700 min-h-[140px]"
             >
               <span className="text-5xl">—</span>
-              <span className="text-3xl mt-3 min-h-[40px]"></span>
             </div>
           ))}
         </div>
       </div>
 
-      <ScorePicker onSelect={registerThrow} />
+      <div className="w-full px-6">
+        <ScorePicker onSelect={registerThrow} />
+      </div>
     </div>
   );
 }

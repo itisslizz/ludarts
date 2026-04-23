@@ -305,12 +305,12 @@ export function PlayerSelectScreen({
     selectedPlayerIds.length <= game.maxPlayers;
 
   return (
-    <div className="flex flex-col h-full w-full -mx-6 -my-8">
+    <div className="flex flex-col h-full w-full">
       {/* Top Bar with Actions */}
-      <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 border-b-2 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 border-b-2 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 purple:border-purple-900 purple:bg-purple-950">
         <button
           onClick={onBack}
-          className="rounded-xl border-2 border-zinc-300 px-8 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-xl border-2 border-zinc-300 px-8 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
         >
           Back
         </button>
@@ -337,11 +337,11 @@ export function PlayerSelectScreen({
       {/* Selected Players Row (Center) */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 overflow-y-auto">
         <div className="w-full max-w-4xl">
-          <h2 className="text-2xl font-semibold text-center mb-6 text-zinc-700 dark:text-zinc-300">
+          <h2 className="text-2xl font-semibold text-center mb-6 text-zinc-700 purple:text-zinc-300 dark:text-zinc-300">
             Selected Players {selectedPlayerIds.length > 0 && `(${selectedPlayerIds.length})`}
           </h2>
           
-          <div className="flex justify-center items-center gap-8 flex-wrap min-h-[150px] rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50/50 p-8 dark:border-zinc-700 dark:bg-zinc-900/50">
+          <div className="flex justify-center items-center gap-8 flex-wrap min-h-[150px] rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50/50 p-8 dark:border-zinc-700 dark:bg-zinc-900/50 purple:border-purple-700 purple:bg-purple-950/50">
             {selectedPlayerIds.length === 0 ? (
               <p className="text-xl text-zinc-400 dark:text-zinc-500">
                 Select players from below
@@ -386,7 +386,7 @@ export function PlayerSelectScreen({
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Add new player"
-              className="flex-1 rounded-xl border-2 border-zinc-200 bg-white px-6 py-3 text-lg outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:border-zinc-500"
+              className="flex-1 rounded-xl border-2 border-zinc-200 bg-white px-6 py-3 text-lg outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:focus:border-zinc-500 purple:border-purple-800 purple:bg-purple-950 purple:focus:border-purple-600"
             />
             <button
               type="submit"
@@ -400,9 +400,9 @@ export function PlayerSelectScreen({
       </div>
 
       {/* All Players Row (Bottom) */}
-      <div className="flex-shrink-0 border-t-2 border-zinc-200 bg-zinc-100/80 dark:border-zinc-800 dark:bg-zinc-900/80 px-8 py-6">
+      <div className="flex-shrink-0 border-t-2 border-zinc-200 bg-zinc-100/80 dark:border-zinc-800 dark:bg-zinc-900/80 purple:border-purple-900 purple:bg-purple-950/80 px-8 py-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-xl font-semibold text-center mb-4 text-zinc-700 dark:text-zinc-300">
+          <h2 className="text-xl font-semibold text-center mb-4 text-zinc-700 purple:text-zinc-300  dark:text-zinc-300">
             All Players
           </h2>
           

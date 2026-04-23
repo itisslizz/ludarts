@@ -48,10 +48,27 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-8 py-8">
-      <h1 className="text-5xl font-bold">Players</h1>
+    <div className="flex flex-col h-full w-full">
+      {/* Top Bar */}
+      <div className="flex-shrink-0 flex items-center justify-between px-8 py-4 border-b-2 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 purple:border-purple-900 purple:bg-purple-950">
+        <button
+          onClick={onBack}
+          className="rounded-xl border-2 border-zinc-300 px-8 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
+        >
+          Back
+        </button>
+        
+        <div className="text-center">
+          <h1 className="text-3xl font-bold">Players</h1>
+        </div>
+        
+        {/* Spacer for symmetry */}
+        <div className="w-[100px]"></div>
+      </div>
 
-      <div className="grid grid-cols-2 w-full gap-3">
+      {/* Content Area */}
+      <div className="flex-1 flex flex-col items-center gap-8 px-6 py-8 overflow-y-auto">
+        <div className="grid grid-cols-2 w-full gap-3">
         {players.length === 0 && (
           <p className="py-6 text-center text-lg text-zinc-400 dark:text-zinc-500">
             No players yet — add one below
@@ -63,33 +80,33 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
             <div
               key={player.id}
               onClick={() => onSelectPlayer(player.id)}
-              className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-200 px-6 py-5 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500"
+              className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-200 px-6 py-5 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500 purple:border-purple-700 purple:hover:border-purple-500"
             >
               <div className="flex-1">
                 <span className="text-xl font-medium">{player.name}</span>
                 {s && s.legsPlayed > 0 ? (
-                  <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400">
+                  <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400 purple:text-purple-400">
                     <span>
                       PPR{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
                         {s.ppr != null ? s.ppr.toFixed(1) : "—"}
                       </span>
                     </span>
                     <span>
                       Win rate{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
                         {s.winRate != null ? `${s.winRate.toFixed(0)}%` : "—"}
                       </span>
                     </span>
                     <span>
                       Legs{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200">
+                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
                         {s.legsPlayed}
                       </span>
                     </span>
                   </div>
                 ) : (
-                  <p className="mt-2 text-base text-zinc-400 dark:text-zinc-500">
+                  <p className="mt-2 text-base text-zinc-400 dark:text-zinc-500 purple:text-purple-400">
                     No legs played
                   </p>
                 )}
@@ -107,7 +124,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
                   </button>
                   <button
                     onClick={() => setConfirmingDelete(null)}
-                    className="rounded-lg bg-zinc-200 px-4 py-2 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
+                    className="rounded-lg bg-zinc-200 px-4 py-2 text-base font-medium text-zinc-700 transition-colors hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600 purple:bg-purple-700 purple:text-purple-200 purple:hover:bg-purple-600"
                   >
                     Cancel
                   </button>
@@ -115,7 +132,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
               ) : (
                 <button
                   onClick={(e) => { e.stopPropagation(); setConfirmingDelete(player.id); }}
-                  className="text-2xl text-zinc-400 transition-colors hover:text-red-500"
+                  className="text-2xl text-zinc-400 transition-colors hover:text-red-500 dark:text-zinc-400 dark:hover:text-red-500 purple:text-purple-400 purple:hover:text-red-500"
                 >
                   ✕
                 </button>
@@ -134,12 +151,12 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Player name"
-          className="flex-1 rounded-xl border-2 border-zinc-200 bg-transparent px-6 py-4 text-lg outline-none focus:border-zinc-400 dark:border-zinc-700 dark:focus:border-zinc-500"
+          className="flex-1 rounded-xl border-2 border-zinc-200 bg-transparent px-6 py-4 text-lg outline-none focus:border-zinc-400 dark:border-zinc-700 dark:focus:border-zinc-500 purple:border-purple-700 purple:focus:border-purple-500"
         />
         <button
           type="submit"
           disabled={!newName.trim()}
-          className="rounded-xl bg-zinc-200 px-6 py-4 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          className="rounded-xl bg-zinc-200 px-6 py-4 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-700 purple:text-purple-200 purple:hover:bg-purple-600"
         >
           Add
         </button>
@@ -167,7 +184,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
               </button>
               <button
                 onClick={() => setConfirmingDeleteAll(false)}
-                className="flex-1 rounded-xl border-2 border-zinc-300 bg-white px-6 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className="flex-1 rounded-xl border-2 border-zinc-300 bg-white px-6 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 purple:border-purple-800 purple:bg-purple-950 purple:hover:bg-purple-900"
               >
                 Cancel
               </button>
@@ -182,13 +199,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
           </button>
         )}
       </div>
-
-      <button
-        onClick={onBack}
-        className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Back
-      </button>
+      </div>
     </div>
   );
 }

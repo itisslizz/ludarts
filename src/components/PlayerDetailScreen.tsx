@@ -152,7 +152,7 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
 
         <button
           onClick={() => setShowPpr(false)}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
         >
           Back
         </button>
@@ -260,7 +260,7 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
       <div className="flex gap-4">
         <button
           onClick={onBack}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
         >
           Back
         </button>

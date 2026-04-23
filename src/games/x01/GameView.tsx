@@ -53,10 +53,10 @@ function VisitHistory({
         return (
           <div
             key={visitIndex}
-            className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900"
+            className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900 purple:bg-purple-950"
           >
             {playerName && (
-              <span className="w-20 truncate text-base font-medium text-zinc-400 dark:text-zinc-500">
+              <span className="w-20 truncate text-base font-medium text-zinc-400 dark:text-zinc-500 purple:text-purple-400">
                 {playerName}
               </span>
             )}
@@ -69,7 +69,7 @@ function VisitHistory({
               className={`text-lg font-semibold ${
                 busted
                   ? "text-red-500"
-                  : "text-zinc-600 dark:text-zinc-400"
+                  : "text-zinc-600 dark:text-zinc-400 purple:text-purple-200"
               }`}
             >
               {busted ? "BUST" : visitTotal}
@@ -155,7 +155,7 @@ export function X01GameView({
               className={`rounded-2xl px-8 py-7 ${
                 isWinner
                   ? "bg-green-500/10 border-2 border-green-500"
-                  : "bg-zinc-100 dark:bg-zinc-900"
+                  : "bg-zinc-100 dark:bg-zinc-900 purple:bg-purple-950"
               }`}
             >
               <div className="flex items-center justify-between mb-6">
@@ -246,7 +246,7 @@ export function X01GameView({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center gap-8 py-8">
+    <div className="flex flex-1 flex-col items-center gap-8 px-6 py-8">
       {state.firstTo > 1 && (
         <p className="text-xl text-zinc-500 dark:text-zinc-400">
           Leg {state.currentLeg} • First to {state.firstTo}
@@ -287,7 +287,7 @@ export function X01GameView({
               className={`flex flex-col items-center rounded-2xl px-6 py-5 ${
                 isCurrentPlayer
                   ? "bg-yellow-400/15 border-2 border-yellow-400"
-                  : "bg-zinc-100 dark:bg-zinc-900"
+                  : "bg-zinc-100 dark:bg-zinc-900 purple:bg-purple-950"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -382,7 +382,7 @@ export function X01GameView({
               return (
                 <div
                   key={allVisits.length - 1 - i}
-                  className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900"
+                  className="flex items-center gap-4 rounded-xl bg-zinc-100 px-4 py-3 dark:bg-zinc-900 purple:bg-purple-950"
                 >
                   <span className="w-20 truncate text-base font-medium text-zinc-400 dark:text-zinc-500">
                     {playerName(entry.playerId)}
@@ -394,7 +394,7 @@ export function X01GameView({
                   </div>
                   <span
                     className={`text-lg font-semibold ${
-                      busted ? "text-red-500" : "text-zinc-600 dark:text-zinc-400"
+                      busted ? "text-red-500" : "text-zinc-600 dark:text-zinc-400 purple:text-purple-200"
                     }`}
                   >
                     {busted ? "BUST" : visitTotal}

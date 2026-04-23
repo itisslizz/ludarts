@@ -64,7 +64,7 @@ export function AppShell() {
         </header>
       )}
 
-      <main className="flex flex-1 flex-col px-6 py-8">
+      <main className="flex flex-1 flex-col">
         {view.screen === "home" && (
           <HomeScreen onSelectGame={selectGame} onManagePlayers={goPlayers} />
         )}

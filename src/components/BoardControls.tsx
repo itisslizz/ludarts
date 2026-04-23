@@ -67,7 +67,7 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
             <button
               onClick={() => handleAction("reset", "POST")}
               disabled={busy !== null}
-              className="rounded-lg bg-zinc-200 px-6 py-3 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              className="rounded-lg bg-zinc-200 px-6 py-3 text-lg font-medium text-zinc-800 transition-colors hover:bg-zinc-300 disabled:opacity-50 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 purple:bg-purple-900 purple:text-purple-200 purple:hover:bg-purple-800"
             >
               {busy === "reset" ? "Resetting…" : "Reset Board"}
             </button>
@@ -77,7 +77,7 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
         {/* Center: Out mode for X01 */}
         <div className="flex flex-col items-center gap-1">
           {x01Config && (
-            <p className="text-xl font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-xl font-medium text-zinc-700 dark:text-zinc-300 purple:text-purple-300">
               {x01Config.baseScore} - {x01Config.outMode === "double" ? "Double Out" : "Straight Out"}
             </p>
           )}
@@ -89,7 +89,7 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              className="rounded-lg border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+              className="rounded-lg border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
             >
               Undo
             </button>
@@ -106,15 +106,15 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
       {/* Quit Confirmation Modal */}
       {showQuitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={handleQuitCancel}>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 shadow-2xl max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Quit Game?</h2>
-            <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-6">
+          <div className="bg-white dark:bg-zinc-900 purple:bg-purple-950 rounded-2xl p-8 shadow-2xl max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100 purple:text-purple-300">Quit Game?</h2>
+            <p className="text-lg text-zinc-600 dark:text-zinc-400 purple:text-purple-400 mb-6">
               Are you sure you want to quit? Your progress will be lost.
             </p>
             <div className="flex gap-4 justify-end">
               <button
                 onClick={handleQuitCancel}
-                className="rounded-lg border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="rounded-lg border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
               >
                 Cancel
               </button>

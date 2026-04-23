@@ -44,7 +44,7 @@ export function ThrowHistory({ history, throwCount }: ThrowHistoryProps) {
           return (
             <div
               key={roundIndex}
-              className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-2 dark:bg-zinc-900"
+              className="flex items-center gap-3 rounded-lg bg-zinc-100 px-3 py-2 dark:bg-zinc-900 purple:bg-purple-950"
             >
               <span className="text-xs font-medium text-zinc-400 dark:text-zinc-500 w-6">
                 R{roundIndex + 1}
