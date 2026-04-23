@@ -6,6 +6,7 @@ import { computeStats } from "./stats";
 import { saveX01Leg } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
+import { getCheckoutSuggestion } from "@/lib/checkouts";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
 
 interface X01GameViewProps {
@@ -232,6 +233,17 @@ export function X01GameView({
   const visitTotal = visitHasBust ? 0 : state.currentVisit.reduce((s, t) => s + t.points, 0);
   const isMultiplayer = state.playerIds.length > 1;
   
+  // Calculate checkout suggestion for current player
+  let checkoutSuggestion = null;
+  if (!visitHasBust) {
+    // currentPlayer.score is already the remaining score (updated after each throw)
+    const remainingScore = currentPlayer.score;
+    const dartsRemaining = 3 - state.currentVisit.length;
+    if (remainingScore > 1 && dartsRemaining > 0) {
+      checkoutSuggestion = getCheckoutSuggestion(remainingScore, dartsRemaining, state.outMode);
+    }
+  }
+  
   // Interleave all visits for the combined history
   const allVisits: { visit: X01ThrowRecord[]; playerId: string }[] = [];
   if (isMultiplayer) {
@@ -300,6 +312,7 @@ export function X01GameView({
                   </span>
                 )}
               </div>
+              
               <div className="flex items-baseline gap-3">
                 <span className="text-5xl font-bold tabular-nums">{ps.score}</span>
                 {showVisitTotal && (
@@ -334,14 +347,35 @@ export function X01GameView({
               </span>
             </div>
           ))}
-          {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => (
-            <div
-              key={`empty-${i}`}
-              className="flex items-center justify-center rounded-2xl border-2 border-dashed border-zinc-300 px-8 py-8 text-5xl text-zinc-400 dark:border-zinc-700 min-h-[120px]"
-            >
-              —
-            </div>
-          ))}
+          {Array.from({ length: 3 - state.currentVisit.length }).map((_, i) => {
+            // i represents the index in the remaining empty boxes (0, 1, or 2)
+            // We want to show the i-th suggested dart from the checkout
+            const suggestedDart = checkoutSuggestion?.darts[i];
+            
+            return (
+              <div
+                key={`empty-${i}`}
+                className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-8 py-8 min-h-[120px] ${
+                  suggestedDart
+                    ? "border-green-400/50 bg-green-500/5 dark:border-green-500/40 dark:bg-green-500/5"
+                    : "border-zinc-300 dark:border-zinc-700"
+                }`}
+              >
+                {suggestedDart ? (
+                  <>
+                    <span className="text-4xl font-bold italic text-green-600/60 dark:text-green-400/60">
+                      {suggestedDart}
+                    </span>
+                    <span className="text-sm font-medium italic text-green-600/50 dark:text-green-400/50 mt-1">
+                      suggested
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-5xl text-zinc-400">—</span>
+                )}
+              </div>
+            );
+          })}
         </div>
         
         {/* Bust message */}
