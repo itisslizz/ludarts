@@ -148,6 +148,7 @@ export interface GotemState {
 export interface Player {
   id: string;
   name: string;
+  elo_rating?: number; // Optional for backward compatibility
 }
 
 // --- Game registry ---
@@ -178,6 +179,7 @@ export type AppView =
 export interface DbPlayer {
   id: string;
   name: string;
+  elo_rating: number;
   created_at: string;
 }
 
@@ -194,6 +196,7 @@ export interface DbX01GamePlayer {
   game_id: string;
   player_id: string;
   position: number;
+  elo_change?: number;
 }
 
 export interface DbX01Dart {

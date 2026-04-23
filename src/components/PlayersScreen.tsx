@@ -83,7 +83,14 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
               className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-zinc-200 px-6 py-5 transition-colors hover:border-zinc-400 dark:border-zinc-700 dark:hover:border-zinc-500 purple:border-purple-700 purple:hover:border-purple-500"
             >
               <div className="flex-1">
-                <span className="text-xl font-medium">{player.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl font-medium">{player.name}</span>
+                  {player.elo_rating && (
+                    <span className="rounded-lg bg-blue-500/15 px-3 py-1 text-sm font-bold text-blue-600 dark:text-blue-400">
+                      {player.elo_rating}
+                    </span>
+                  )}
+                </div>
                 {s && s.legsPlayed > 0 ? (
                   <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400 purple:text-purple-400">
                     <span>

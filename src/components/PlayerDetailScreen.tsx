@@ -10,7 +10,7 @@ interface PlayerDetailScreenProps {
 }
 
 interface PlayerDetailData {
-  player: { id: string; name: string };
+  player: { id: string; name: string; elo_rating?: number };
   stats: PlayerDetailStats;
 }
 
@@ -176,13 +176,23 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
           />
         </form>
       ) : (
-        <h1
-          onClick={startEditing}
-          className="cursor-pointer text-3xl font-bold hover:text-zinc-500 dark:hover:text-zinc-400"
-          title="Click to edit"
-        >
-          {player.name}
-        </h1>
+        <div className="flex flex-col items-center gap-2">
+          <h1
+            onClick={startEditing}
+            className="cursor-pointer text-3xl font-bold hover:text-zinc-500 dark:hover:text-zinc-400"
+            title="Click to edit"
+          >
+            {player.name}
+          </h1>
+          {player.elo_rating && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Elo Rating:</span>
+              <span className="rounded-lg bg-blue-500/15 px-4 py-1.5 text-lg font-bold text-blue-600 dark:text-blue-400">
+                {player.elo_rating}
+              </span>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Game limit toggle */}

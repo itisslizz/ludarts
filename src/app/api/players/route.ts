@@ -16,6 +16,7 @@ export async function POST(req: Request) {
   const player = {
     id: id ?? crypto.randomUUID(),
     name,
+    elo_rating: 1500,
     created_at: new Date().toISOString(),
   };
 

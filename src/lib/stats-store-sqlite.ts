@@ -22,6 +22,7 @@ function migrate(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS players (
       id          TEXT PRIMARY KEY,
       name        TEXT NOT NULL,
+      elo_rating  INTEGER NOT NULL DEFAULT 1500,
       created_at  TEXT NOT NULL
     );
 
@@ -39,6 +40,7 @@ function migrate(db: Database.Database) {
       game_id     TEXT NOT NULL,
       player_id   TEXT NOT NULL,
       position    INTEGER NOT NULL,
+      elo_change  INTEGER,
       PRIMARY KEY (game_id, player_id),
       FOREIGN KEY (game_id) REFERENCES x01_games(id),
       FOREIGN KEY (player_id) REFERENCES players(id)
@@ -61,6 +63,20 @@ function migrate(db: Database.Database) {
       FOREIGN KEY (player_id) REFERENCES players(id)
     );
   `);
+  
+  // Add elo_rating column to existing tables if it doesn't exist
+  try {
+    db.exec(`ALTER TABLE players ADD COLUMN elo_rating INTEGER NOT NULL DEFAULT 1500`);
+  } catch {
+    // Column already exists
+  }
+  
+  // Add elo_change column to x01_game_players if it doesn't exist
+  try {
+    db.exec(`ALTER TABLE x01_game_players ADD COLUMN elo_change INTEGER`);
+  } catch {
+    // Column already exists
+  }
 }
 
 let _db: Database.Database | null = null;
@@ -68,6 +84,30 @@ let _db: Database.Database | null = null;
 function db(): Database.Database {
   if (!_db) _db = getDb();
   return _db;
+}
+
+/**
+ * Calculate Elo rating changes for a 1v1 match
+ * @param winnerRating - Current Elo rating of the winner
+ * @param loserRating - Current Elo rating of the loser
+ * @param kFactor - K-factor for rating change magnitude (default 32)
+ * @returns Object with rating changes for winner and loser
+ */
+function calculateEloChanges(
+  winnerRating: number,
+  loserRating: number,
+  kFactor: number = 32
+): { winnerChange: number; loserChange: number } {
+  // Expected score for winner
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserRating - winnerRating) / 400));
+  // Expected score for loser
+  const expectedLoser = 1 / (1 + Math.pow(10, (winnerRating - loserRating) / 400));
+  
+  // Actual scores: 1 for win, 0 for loss
+  const winnerChange = Math.round(kFactor * (1 - expectedWinner));
+  const loserChange = Math.round(kFactor * (0 - expectedLoser));
+  
+  return { winnerChange, loserChange };
 }
 
 export const sqliteStatsStore: StatsStore = {
@@ -82,11 +122,12 @@ export const sqliteStatsStore: StatsStore = {
   },
 
   savePlayer(player: DbPlayer) {
+    const eloRating = player.elo_rating ?? 1500;
     db()
       .prepare(
-        "INSERT INTO players (id, name, created_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
+        "INSERT INTO players (id, name, elo_rating, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET name = excluded.name",
       )
-      .run(player.id, player.name, player.created_at);
+      .run(player.id, player.name, eloRating, player.created_at);
   },
 
   deletePlayer(id: string) {
@@ -115,11 +156,14 @@ export const sqliteStatsStore: StatsStore = {
       "INSERT INTO x01_games (id, target_score, out_mode, started_at, finished_at, winner_id) VALUES (?, ?, ?, ?, ?, ?)",
     );
     const insertPlayer = d.prepare(
-      "INSERT INTO x01_game_players (game_id, player_id, position) VALUES (?, ?, ?)",
+      "INSERT INTO x01_game_players (game_id, player_id, position, elo_change) VALUES (?, ?, ?, ?)",
     );
     const insertDart = d.prepare(
       `INSERT INTO x01_darts (game_id, player_id, visit_number, dart_index, segment_name, segment_number, segment_multiplier, score, is_bust, coord_x, coord_y)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    const updateElo = d.prepare(
+      "UPDATE players SET elo_rating = elo_rating + ? WHERE id = ?",
     );
 
     const tx = d.transaction(() => {
@@ -131,8 +175,41 @@ export const sqliteStatsStore: StatsStore = {
         game.finished_at,
         game.winner_id,
       );
+      
+      // Calculate Elo changes for 2-player games
+      let eloChanges: Map<string, number> = new Map();
+      if (players.length === 2 && game.winner_id) {
+        const player1 = this.getPlayer(players[0].player_id);
+        const player2 = this.getPlayer(players[1].player_id);
+        
+        if (player1 && player2) {
+          const rating1 = player1.elo_rating ?? 1500;
+          const rating2 = player2.elo_rating ?? 1500;
+          
+          const isPlayer1Winner = game.winner_id === players[0].player_id;
+          const { winnerChange, loserChange } = calculateEloChanges(
+            isPlayer1Winner ? rating1 : rating2,
+            isPlayer1Winner ? rating2 : rating1
+          );
+          
+          eloChanges.set(
+            players[0].player_id,
+            isPlayer1Winner ? winnerChange : loserChange
+          );
+          eloChanges.set(
+            players[1].player_id,
+            isPlayer1Winner ? loserChange : winnerChange
+          );
+          
+          // Update player Elo ratings
+          updateElo.run(eloChanges.get(players[0].player_id), players[0].player_id);
+          updateElo.run(eloChanges.get(players[1].player_id), players[1].player_id);
+        }
+      }
+      
       for (const p of players) {
-        insertPlayer.run(p.game_id, p.player_id, p.position);
+        const eloChange = eloChanges.get(p.player_id) ?? null;
+        insertPlayer.run(p.game_id, p.player_id, p.position, eloChange);
       }
       for (const dart of darts) {
         insertDart.run(
