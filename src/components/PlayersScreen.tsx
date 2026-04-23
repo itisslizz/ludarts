@@ -51,7 +51,7 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
     <div className="flex flex-1 flex-col items-center gap-8 py-8">
       <h1 className="text-5xl font-bold">Players</h1>
 
-      <div className="flex w-full max-w-2xl flex-col gap-3">
+      <div className="grid grid-cols-2 w-full gap-3">
         {players.length === 0 && (
           <p className="py-6 text-center text-lg text-zinc-400 dark:text-zinc-500">
             No players yet — add one below
