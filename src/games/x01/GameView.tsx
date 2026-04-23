@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useX01GameLogic } from "./useGameLogic";
 import { computeStats } from "./stats";
-import { saveX01Leg } from "./saveGame";
+import { saveX01Leg, type PlayerEloData } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import { getCheckoutSuggestion } from "@/lib/checkouts";
@@ -96,6 +96,7 @@ export function X01GameView({
   const { players: allPlayers } = usePlayerStore();
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
+  const [playerEloData, setPlayerEloData] = useState<PlayerEloData[]>([]);
 
   // Can undo if there are throws in current visit OR any player has completed visits
   const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
@@ -116,11 +117,18 @@ export function X01GameView({
   useEffect(() => {
     const newLegs = state.completedLegs.slice(savedLegsRef.current);
     if (newLegs.length > 0) {
-      // Save each new leg
-      for (const legData of newLegs) {
-        saveX01Leg(legData, state).catch(() => {});
-      }
-      savedLegsRef.current = state.completedLegs.length;
+      // Save each new leg and get Elo updates
+      (async () => {
+        for (const legData of newLegs) {
+          try {
+            const eloData = await saveX01Leg(legData, state);
+            setPlayerEloData(eloData);
+          } catch (error) {
+            console.error('Failed to save leg:', error);
+          }
+        }
+        savedLegsRef.current = state.completedLegs.length;
+      })();
     }
   }, [state.completedLegs.length, state]);
 
@@ -174,7 +182,10 @@ export function X01GameView({
         <div className={`grid w-full max-w-6xl gap-6 ${
           legPlayerData.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
         }`}>
-          {legPlayerData.map(({ playerId, name, isWinner, stats }) => (
+          {legPlayerData.map(({ playerId, name, isWinner, stats }) => {
+            const eloInfo = playerEloData.find(p => p.playerId === playerId);
+            
+            return (
             <div
               key={playerId}
               className={`rounded-2xl px-8 py-7 ${
@@ -184,7 +195,25 @@ export function X01GameView({
               }`}
             >
               <div className="flex items-center justify-between mb-6">
-                <span className="text-2xl font-bold">{name}</span>
+                <div className="flex flex-col gap-2">
+                  <span className="text-2xl font-bold">{name}</span>
+                  {eloInfo && (
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg bg-blue-500/15 px-3 py-1 text-base font-bold text-blue-600 dark:text-blue-400">
+                        {eloInfo.eloRating}
+                      </span>
+                      {eloInfo.eloChange !== null && eloInfo.eloChange !== 0 && (
+                        <span className={`text-sm font-semibold ${
+                          eloInfo.eloChange > 0 
+                            ? "text-green-600 dark:text-green-400" 
+                            : "text-red-600 dark:text-red-400"
+                        }`}>
+                          {eloInfo.eloChange > 0 ? "+" : ""}{eloInfo.eloChange}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {isWinner && (
                   <span className="rounded-full bg-green-500 px-4 py-1 text-base font-semibold text-white">
                     Leg Winner
@@ -227,12 +256,13 @@ export function X01GameView({
                 </div>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         <button
           onClick={continueToNextLeg}
-          className="rounded-2xl bg-green-600 px-16 py-6 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+          className="rounded-2xl bg-green-600 px-6 py-6 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
         >
           Next Leg
         </button>

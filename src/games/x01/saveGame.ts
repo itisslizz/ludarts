@@ -7,10 +7,16 @@ function generateId(): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+export interface PlayerEloData {
+  playerId: string;
+  eloRating: number;
+  eloChange: number | null;
+}
+
 export async function saveX01Leg(
   legData: X01LegData,
   state: X01State,
-): Promise<void> {
+): Promise<PlayerEloData[]> {
   const gameId = generateId();
   const now = new Date().toISOString();
 
@@ -53,9 +59,16 @@ export async function saveX01Leg(
     }
   }
 
-  await fetch("/api/stats/x01", {
+  const response = await fetch("/api/stats/x01", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ game, players, darts }),
   });
+  
+  if (!response.ok) {
+    throw new Error('Failed to save game');
+  }
+  
+  const result = await response.json();
+  return result.players || [];
 }

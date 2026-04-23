@@ -30,5 +30,16 @@ export async function POST(req: Request) {
   }
 
   sqliteStatsStore.saveX01Game(body.game, body.players, body.darts);
-  return Response.json({ ok: true }, { status: 201 });
+  
+  // Fetch updated player data with Elo ratings and changes
+  const playerData = body.players.map(p => {
+    const player = sqliteStatsStore.getPlayer(p.player_id);
+    return {
+      playerId: p.player_id,
+      eloRating: player?.elo_rating ?? 1500,
+      eloChange: p.elo_change ?? null,
+    };
+  });
+  
+  return Response.json({ ok: true, players: playerData }, { status: 201 });
 }
