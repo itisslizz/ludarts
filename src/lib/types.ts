@@ -65,7 +65,7 @@ export interface X01PlayerState {
   legsWon: number;
 }
 
-export type X01Phase = "playing" | "complete";
+export type X01Phase = "playing" | "legComplete" | "complete";
 
 export interface X01State {
   phase: X01Phase;

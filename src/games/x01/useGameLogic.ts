@@ -18,6 +18,7 @@ type Action =
   | { type: "REGISTER_THROW"; segment: Segment; coords?: { x: number; y: number } }
   | { type: "END_TURN" }
   | { type: "UNDO" }
+  | { type: "CONTINUE_TO_NEXT_LEG" }
   | { type: "RESET" };
 
 function createInitialState({ config, playerIds }: X01InitArgs): X01State {
@@ -186,12 +187,18 @@ function reducer(state: X01State, action: Action): X01State {
             completedLegs: [...state.completedLegs, legData],
           };
         } else {
-          // Start a new leg
-          return startNewLeg({
+          // Leg complete but match continues - show leg complete screen
+          return {
             ...state,
+            phase: "legComplete",
             players: updatedPlayers,
             throwCount: state.throwCount + 1,
-          }, legData);
+            currentVisit: [],
+            busted: false,
+            waitingForTakeout: false,
+            winnerId: cp.playerId,
+            completedLegs: [...state.completedLegs, legData],
+          };
         }
       }
 
@@ -320,6 +327,35 @@ function reducer(state: X01State, action: Action): X01State {
       };
     }
 
+    case "CONTINUE_TO_NEXT_LEG": {
+      if (state.phase !== "legComplete") return state;
+      
+      // Rotate playerIds: move first player to the back
+      const rotatedPlayerIds = [...state.playerIds.slice(1), state.playerIds[0]];
+      
+      // Rotate players array to match the new order and reset for new leg
+      const rotatedPlayers = [...state.players.slice(1), state.players[0]].map((p) => ({
+        ...p,
+        score: state.targetScore,
+        scoreAtVisitStart: state.targetScore,
+        visits: [],
+      }));
+
+      return {
+        ...state,
+        phase: "playing",
+        playerIds: rotatedPlayerIds,
+        players: rotatedPlayers,
+        currentPlayerIndex: 0,
+        currentVisit: [],
+        throwCount: 0,
+        busted: false,
+        waitingForTakeout: false,
+        winnerId: null,
+        currentLeg: state.currentLeg + 1,
+      };
+    }
+
     case "RESET":
       return createInitialState({
         config: {
@@ -346,6 +382,7 @@ export function useX01GameLogic(config: X01Config, playerIds: string[]) {
   const endTurn = useCallback(() => dispatch({ type: "END_TURN" }), []);
   const undo = useCallback(() => dispatch({ type: "UNDO" }), []);
   const reset = useCallback(() => dispatch({ type: "RESET" }), []);
+  const continueToNextLeg = useCallback(() => dispatch({ type: "CONTINUE_TO_NEXT_LEG" }), []);
 
-  return { state, registerThrow, endTurn, undo, reset };
+  return { state, registerThrow, endTurn, undo, reset, continueToNextLeg };
 }

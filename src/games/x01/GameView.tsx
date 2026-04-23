@@ -92,7 +92,7 @@ export function X01GameView({
   onPlayAgain,
   onMount,
 }: X01GameViewProps) {
-  const { state, registerThrow, endTurn, undo, reset } = useX01GameLogic(config, playerIds);
+  const { state, registerThrow, endTurn, undo, reset, continueToNextLeg } = useX01GameLogic(config, playerIds);
   const { players: allPlayers } = usePlayerStore();
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
@@ -126,6 +126,119 @@ export function X01GameView({
 
   const playerName = (id: string) =>
     allPlayers.find((p) => p.id === id)?.name ?? "Unknown";
+
+  // Leg complete screen (for multi-leg matches)
+  if (state.phase === "legComplete") {
+    const completedLeg = state.completedLegs[state.completedLegs.length - 1];
+    const legWinner = state.players.find(p => p.playerId === completedLeg.winnerId);
+    
+    // Get stats for the completed leg
+    const legPlayerData = completedLeg.players.map(lp => {
+      const currentPlayerState = state.players.find(p => p.playerId === lp.playerId);
+      const stats = computeStats({ ...currentPlayerState!, visits: lp.visits }, state.targetScore);
+      return {
+        playerId: lp.playerId,
+        name: playerName(lp.playerId),
+        isWinner: lp.playerId === completedLeg.winnerId,
+        legsWon: currentPlayerState?.legsWon ?? 0,
+        stats,
+      };
+    });
+
+    return (
+      <div className="flex flex-1 flex-col items-center gap-12 py-12">
+        <div className="text-center">
+          <h1 className="text-6xl font-bold">
+            Leg {completedLeg.legNumber} Complete!
+          </h1>
+          <p className="mt-4 text-3xl font-semibold text-green-600 dark:text-green-400">
+            {playerName(completedLeg.winnerId)} wins the leg!
+          </p>
+          <p className="mt-2 text-xl text-zinc-500 dark:text-zinc-400">
+            {state.targetScore} &middot; {state.outMode === "double" ? "Double Out" : "Straight Out"}
+          </p>
+        </div>
+
+        {/* Current match score */}
+        <div className="flex gap-8 items-center">
+          {legPlayerData.map(({ playerId, name, legsWon }) => (
+            <div key={playerId} className="text-center">
+              <p className="text-lg font-medium text-zinc-600 dark:text-zinc-400">{name}</p>
+              <p className="text-5xl font-bold tabular-nums">{legsWon}</p>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">legs</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Leg stats cards */}
+        <div className={`grid w-full max-w-6xl gap-6 ${
+          legPlayerData.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+        }`}>
+          {legPlayerData.map(({ playerId, name, isWinner, stats }) => (
+            <div
+              key={playerId}
+              className={`rounded-2xl px-8 py-7 ${
+                isWinner
+                  ? "bg-green-500/10 border-2 border-green-500"
+                  : "bg-zinc-100 dark:bg-zinc-900 purple:bg-purple-950"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-2xl font-bold">{name}</span>
+                {isWinner && (
+                  <span className="rounded-full bg-green-500 px-4 py-1 text-base font-semibold text-white">
+                    Leg Winner
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-3 gap-y-6 gap-x-8 text-center">
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.ppr.toFixed(1)}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">PPR</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.first9Ppr.toFixed(1)}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">First 9 PPR</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.checkoutRate}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">Checkout</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits60}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">60+</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits100}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">100+</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits140}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">140+</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.visits180}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">180s</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.totalDarts}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">Darts</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={continueToNextLeg}
+          className="rounded-2xl bg-green-600 px-16 py-6 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+        >
+          Next Leg
+        </button>
+      </div>
+    );
+  }
 
   if (state.phase === "complete") {
     const playerStats = state.players.map((ps) => ({
