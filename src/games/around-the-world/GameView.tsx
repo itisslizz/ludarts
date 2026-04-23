@@ -9,19 +9,24 @@ import type { Segment } from "@/lib/types";
 
 interface ATWGameViewProps {
   onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
+  onUndo: (handler: () => void, canUndo: boolean) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
 }
 
 export function ATWGameView({
   onThrowDetected,
+  onUndo,
   onQuit,
   onPlayAgain,
 }: ATWGameViewProps) {
   const { state, currentTarget, registerThrow, undo, reset } =
     useATWGameLogic();
 
+  const canUndo = state.throwCount > 0;
+
   onThrowDetected(registerThrow);
+  onUndo(undo, canUndo);
 
   if (state.phase === "complete") {
     const hits = state.history.filter((r) => r.hit).length;
@@ -62,32 +67,15 @@ export function ATWGameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 py-8">
-      <div className="flex w-full max-w-6xl items-center justify-between">
-        <button
-          onClick={onQuit}
-          className="rounded-xl border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
-          Quit
-        </button>
-        <p className="text-xl text-zinc-500 dark:text-zinc-400">
-          {progress} / {SEQUENCE.length}
-        </p>
-      </div>
+      <p className="text-xl text-zinc-500 dark:text-zinc-400">
+        {progress} / {SEQUENCE.length}
+      </p>
 
       <h2 className="text-5xl font-bold">
         Hit <span className="text-yellow-400">{targetLabel}</span>
       </h2>
 
       <Dartboard currentTarget={currentTarget} />
-
-      {/* Undo button */}
-      <button
-        onClick={undo}
-        disabled={state.throwCount === 0}
-        className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Undo Last Throw
-      </button>
 
       {/* Manual score entry */}
       <ScorePicker onSelect={registerThrow} />

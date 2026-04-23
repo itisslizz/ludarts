@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useAutodartsPoller } from "@/hooks/useAutodartsPoller";
 import { BoardControls } from "@/components/BoardControls";
@@ -18,6 +18,8 @@ export function AppShell() {
 
   const throwHandlerRef = useRef<((segment: Segment, coords?: { x: number; y: number }) => void) | null>(null);
   const takeoutHandlerRef = useRef<(() => void) | null>(null);
+  const undoHandlerRef = useRef<(() => void) | null>(null);
+  const [canUndo, setCanUndo] = useState(false);
 
   const handleThrow = useCallback((segment: Segment, coords?: { x: number; y: number }) => {
     throwHandlerRef.current?.(segment, coords);
@@ -27,17 +29,38 @@ export function AppShell() {
     takeoutHandlerRef.current?.();
   }, []);
 
+  const handleUndo = useCallback(() => {
+    undoHandlerRef.current?.();
+  }, []);
+
   const { boardRunning, resetTracking } = useAutodartsPoller({
     processThrows: view.screen === "playing",
     onThrowDetected: handleThrow,
     onTakeout: handleTakeout,
   });
 
+  const handleGameStart = useCallback(async () => {
+    resetTracking();
+    await fetch("/api/autodarts/reset", { method: "POST" }).catch(() => {});
+    
+    // Auto-start board if it's stopped
+    if (boardRunning === false) {
+      await fetch("/api/autodarts/start", { method: "PUT" }).catch(() => {});
+    }
+  }, [boardRunning, resetTracking]);
+
   return (
     <div className="flex h-screen flex-col">
       {view.screen === "playing" && (
         <header className="flex items-center justify-center border-b-2 border-zinc-200 px-6 py-5 dark:border-zinc-800">
-          <BoardControls boardRunning={boardRunning} />
+          <BoardControls 
+            boardRunning={boardRunning}
+            gameId={view.gameId}
+            config={view.config}
+            onQuit={goHome}
+            onUndo={handleUndo}
+            canUndo={canUndo}
+          />
         </header>
       )}
 
@@ -83,15 +106,13 @@ export function AppShell() {
             onTakeout={(handler) => {
               takeoutHandlerRef.current = handler;
             }}
+            onUndo={(handler, canUndoState) => {
+              undoHandlerRef.current = handler;
+              setCanUndo(canUndoState);
+            }}
             onQuit={goHome}
-            onPlayAgain={() => {
-              resetTracking();
-              fetch("/api/autodarts/reset", { method: "POST" }).catch(() => {});
-            }}
-            onMount={() => {
-              resetTracking();
-              fetch("/api/autodarts/reset", { method: "POST" }).catch(() => {});
-            }}
+            onPlayAgain={handleGameStart}
+            onMount={handleGameStart}
           />
         )}
       </main>

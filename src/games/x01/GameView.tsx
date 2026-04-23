@@ -13,6 +13,7 @@ interface X01GameViewProps {
   playerIds: string[];
   onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
+  onUndo: (handler: () => void, canUndo: boolean) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
   onMount?: () => void;
@@ -85,6 +86,7 @@ export function X01GameView({
   playerIds,
   onThrowDetected,
   onTakeout,
+  onUndo,
   onQuit,
   onPlayAgain,
   onMount,
@@ -94,8 +96,12 @@ export function X01GameView({
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
 
+  // Can undo if there are throws in current visit OR any player has completed visits
+  const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
+
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
+  onUndo(undo, canUndo);
 
   // Reset board on mount
   useEffect(() => {
@@ -226,9 +232,6 @@ export function X01GameView({
   const visitTotal = visitHasBust ? 0 : state.currentVisit.reduce((s, t) => s + t.points, 0);
   const isMultiplayer = state.playerIds.length > 1;
   
-  // Can undo if there are throws in current visit OR any player has completed visits
-  const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
-
   // Interleave all visits for the combined history
   const allVisits: { visit: X01ThrowRecord[]; playerId: string }[] = [];
   if (isMultiplayer) {
@@ -244,24 +247,11 @@ export function X01GameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 py-8">
-      <div className="flex w-full max-w-6xl items-center justify-between">
-        <button
-          onClick={onQuit}
-          className="rounded-xl border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
-          Quit
-        </button>
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-xl text-zinc-500 dark:text-zinc-400">
-            {state.outMode === "double" ? "Double Out" : "Straight Out"}
-          </p>
-          {state.firstTo > 1 && (
-            <p className="text-base text-zinc-400 dark:text-zinc-500">
-              Leg {state.currentLeg} • First to {state.firstTo}
-            </p>
-          )}
-        </div>
-      </div>
+      {state.firstTo > 1 && (
+        <p className="text-xl text-zinc-500 dark:text-zinc-400">
+          Leg {state.currentLeg} • First to {state.firstTo}
+        </p>
+      )}
 
       {/* Scoreboard */}
       <div className={`grid w-full max-w-6xl gap-4 ${
@@ -367,32 +357,15 @@ export function X01GameView({
           <p className="text-xl font-semibold text-yellow-500 animate-pulse">
             Waiting for takeout...
           </p>
-          <div className="flex gap-4">
-            <button
-              onClick={undo}
-              disabled={!canUndo}
-              className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Undo
-            </button>
-            <button
-              onClick={endTurn}
-              className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-            >
-              Next Player
-            </button>
-          </div>
+          <button
+            onClick={endTurn}
+            className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            Next Player
+          </button>
         </div>
       ) : (
         <>
-          {/* Undo button */}
-          <button
-            onClick={undo}
-            disabled={!canUndo}
-            className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-          >
-            Undo
-          </button>
 
           {/* Manual score entry */}
           <ScorePicker onSelect={registerThrow} />

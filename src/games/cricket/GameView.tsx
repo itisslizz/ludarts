@@ -10,6 +10,7 @@ interface CricketGameViewProps {
   playerIds: string[];
   onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
+  onUndo: (handler: () => void, canUndo: boolean) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
 }
@@ -49,6 +50,7 @@ export function CricketGameView({
   playerIds,
   onThrowDetected,
   onTakeout,
+  onUndo,
   onQuit,
   onPlayAgain,
 }: CricketGameViewProps) {
@@ -58,8 +60,11 @@ export function CricketGameView({
   );
   const { players: allPlayers } = usePlayerStore();
 
+  const canUndo = state.throwCount > 0 && state.currentVisit.length > 0;
+
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
+  onUndo(undo, canUndo);
 
   const playerName = (id: string) =>
     allPlayers.find((p) => p.id === id)?.name ?? "Unknown";
@@ -106,17 +111,6 @@ export function CricketGameView({
 
   return (
     <div className="flex flex-1 flex-col items-center gap-8 py-8">
-      <div className="flex w-full max-w-6xl items-center justify-between">
-        <button
-          onClick={onQuit}
-          className="rounded-xl border-2 border-zinc-300 px-6 py-3 text-lg font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
-        >
-          Quit
-        </button>
-        <p className="text-xl text-zinc-500 dark:text-zinc-400">
-          {variant === "hammer" ? "Hammer Cricket" : "Cricket"}
-        </p>
-      </div>
 
       {/* Scoreboard */}
       <Scoreboard
@@ -164,14 +158,6 @@ export function CricketGameView({
           ))}
         </div>
       </div>
-
-      <button
-        onClick={undo}
-        disabled={state.throwCount === 0 || state.currentVisit.length === 0}
-        className="rounded-xl border-2 border-zinc-300 px-8 py-4 text-lg font-medium transition-colors hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
-      >
-        Undo Last Throw
-      </button>
 
       <ScorePicker onSelect={registerThrow} />
     </div>

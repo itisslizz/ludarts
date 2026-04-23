@@ -11,6 +11,7 @@ interface GameScreenProps {
   config: GameConfig;
   onThrowDetected: (handler: (segment: Segment, coords?: { x: number; y: number }) => void) => void;
   onTakeout: (handler: () => void) => void;
+  onUndo: (handler: () => void, canUndo: boolean) => void;
   onQuit: () => void;
   onPlayAgain: () => void;
   onMount?: () => void;
@@ -22,6 +23,7 @@ export function GameScreen({
   config,
   onThrowDetected,
   onTakeout,
+  onUndo,
   onQuit,
   onPlayAgain,
   onMount,
@@ -31,6 +33,7 @@ export function GameScreen({
       return (
         <ATWGameView
           onThrowDetected={onThrowDetected}
+          onUndo={onUndo}
           onQuit={onQuit}
           onPlayAgain={onPlayAgain}
         />
@@ -42,6 +45,7 @@ export function GameScreen({
           playerIds={playerIds}
           onThrowDetected={onThrowDetected}
           onTakeout={onTakeout}
+          onUndo={onUndo}
           onQuit={onQuit}
           onPlayAgain={onPlayAgain}
           onMount={onMount}
@@ -54,6 +58,7 @@ export function GameScreen({
           playerIds={playerIds}
           onThrowDetected={onThrowDetected}
           onTakeout={onTakeout}
+          onUndo={onUndo}
           onQuit={onQuit}
           onPlayAgain={onPlayAgain}
         />
