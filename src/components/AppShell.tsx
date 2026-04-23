@@ -3,6 +3,7 @@
 import { useRef, useCallback, useState } from "react";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useAutodartsPoller } from "@/hooks/useAutodartsPoller";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { BoardControls } from "@/components/BoardControls";
 import { HomeScreen } from "@/components/HomeScreen";
 import { GameConfigScreen } from "@/components/GameConfigScreen";
@@ -15,6 +16,9 @@ import type { Segment } from "@/lib/types";
 export function AppShell() {
   const { view, goHome, goPlayers, goPlayerDetail, selectGame, configureGame, startGame } =
     useAppNavigation();
+
+  // Keep screen awake on mobile devices
+  useWakeLock();
 
   const throwHandlerRef = useRef<((segment: Segment, coords?: { x: number; y: number }) => void) | null>(null);
   const takeoutHandlerRef = useRef<(() => void) | null>(null);
