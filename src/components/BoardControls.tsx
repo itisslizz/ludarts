@@ -5,6 +5,7 @@ import type { GameConfig, X01Config } from "@/lib/types";
 
 interface BoardControlsProps {
   boardRunning: boolean | null;
+  boardStatus: string;
   gameId: string;
   config: GameConfig;
   onQuit: () => void;
@@ -17,7 +18,7 @@ async function boardAction(action: string, method: "PUT" | "POST") {
   return res.ok;
 }
 
-export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, canUndo }: BoardControlsProps) {
+export function BoardControls({ boardRunning, boardStatus, gameId, config, onQuit, onUndo, canUndo }: BoardControlsProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [showQuitModal, setShowQuitModal] = useState(false);
 
@@ -49,11 +50,27 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
   // Get out mode and target score for X01 games
   const x01Config = gameId === "x01" ? (config as unknown as X01Config) : null;
 
+  // Determine status badge color based on status
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "throw":
+        return "bg-green-500/15 text-green-600 dark:text-green-400";
+      case "takeout":
+        return "bg-blue-500/15 text-blue-600 dark:text-blue-400";
+      case "inprogress":
+        return "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400";
+      case "offline":
+        return "bg-red-500/15 text-red-600 dark:text-red-400";
+      default:
+        return "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400";
+    }
+  };
+
   return (
     <>
       <div className="flex w-full items-center justify-between">
         {/* Left: Board controls */}
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           {!boardRunning && (
             <button
               onClick={() => handleAction("start", "PUT")}
@@ -72,6 +89,9 @@ export function BoardControls({ boardRunning, gameId, config, onQuit, onUndo, ca
               {busy === "reset" ? "Resetting…" : "Reset Board"}
             </button>
           )}
+          <span className={`rounded-lg px-3 py-1.5 text-sm font-semibold uppercase ${getStatusColor(boardStatus)}`}>
+            {boardStatus}
+          </span>
         </div>
 
         {/* Center: Out mode for X01 */}

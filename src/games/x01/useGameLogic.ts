@@ -356,15 +356,19 @@ function reducer(state: X01State, action: Action): X01State {
       };
     }
 
-    case "RESET":
+    case "RESET": {
+      // Rotate playerIds: move first player to the back
+      const rotatedPlayerIds = [...state.playerIds.slice(1), state.playerIds[0]];
+      
       return createInitialState({
         config: {
           baseScore: state.targetScore as 301 | 501 | 701,
           outMode: state.outMode,
           firstTo: state.firstTo,
         },
-        playerIds: state.playerIds,
+        playerIds: rotatedPlayerIds,
       });
+    }
 
     default:
       return state;

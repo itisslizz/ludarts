@@ -40,34 +40,43 @@ export function computeStats(
   const first9Visits = first3Visits.length;
   const first9Ppr = first9Visits > 0 ? first9Points / first9Visits : 0;
 
-  // Checkout rate: successful checkouts / attempts at double
-  // A checkout attempt is a visit where the player could have finished
-  // Simplified: count visits where score was <= 170 at visit start (reachable in 3 darts)
-  // and the last visit if they checked out
-  let checkoutAttempts = 0;
-  let checkoutSuccesses = 0;
+  // Checkout: count darts thrown at doubles when on a double finish
+  // An attempt is when remaining score is a valid double (even number 2-40)
+  let doublesAttempted = 0;
+  let doublesSuccessful = 0;
   let runningScore = targetScore;
 
   for (const visit of visits) {
     const busted = isBustedVisit(visit);
-    const vScore = visitScore(visit);
 
-    // A checkout attempt is when the remaining score was reachable (<=170 for double-out, <=180 for straight)
-    if (runningScore <= 170) {
-      checkoutAttempts++;
-      if (runningScore === vScore && !busted) {
-        checkoutSuccesses++;
+    // Track score dart-by-dart within the visit
+    for (const dart of visit) {
+      // Check if we're on a double finish (even score 2-40, or 50 for bullseye)
+      const onDoubleFinish = (runningScore >= 2 && runningScore <= 40 && runningScore % 2 === 0) || runningScore === 50;
+      
+      if (onDoubleFinish) {
+        doublesAttempted++;
+        // Check if this dart finished the game
+        if (runningScore === dart.points && !dart.busted) {
+          doublesSuccessful++;
+        }
+      }
+
+      // Update running score after this dart (if not busted)
+      if (!dart.busted) {
+        runningScore -= dart.points;
       }
     }
 
-    if (!busted) {
-      runningScore -= vScore;
+    // If busted, restore score to start of visit
+    if (busted) {
+      runningScore += visitScore(visit);
     }
   }
 
   const checkoutRate =
-    checkoutAttempts > 0
-      ? `${checkoutSuccesses}/${checkoutAttempts}`
+    doublesAttempted > 0
+      ? `${doublesSuccessful}/${doublesAttempted}`
       : "—";
 
   // Visit score thresholds (non-busted visits only)

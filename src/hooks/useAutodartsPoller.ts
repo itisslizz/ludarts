@@ -22,6 +22,7 @@ export function useAutodartsPoller({
   const onTakeoutRef = useRef(onTakeout);
   const processThrowsRef = useRef(processThrows);
   const [boardRunning, setBoardRunning] = useState<boolean | null>(null);
+  const [boardStatus, setBoardStatus] = useState<string>("offline");
 
   useEffect(() => {
     onThrowRef.current = onThrowDetected;
@@ -51,10 +52,12 @@ export function useAutodartsPoller({
 
         if (data.status === "offline") {
           setBoardRunning(null);
+          setBoardStatus("offline");
           return;
         }
 
         setBoardRunning(Boolean(data.running));
+        setBoardStatus(data.status || "unknown");
 
         if (!processThrowsRef.current) return;
 
@@ -84,6 +87,7 @@ export function useAutodartsPoller({
         prevStatusRef.current = data.status as string;
       } catch {
         setBoardRunning(null);
+        setBoardStatus("offline");
       }
     };
 
@@ -92,5 +96,5 @@ export function useAutodartsPoller({
     return () => clearInterval(id);
   }, [intervalMs]);
 
-  return { resetTracking, boardRunning };
+  return { resetTracking, boardRunning, boardStatus };
 }

@@ -97,6 +97,7 @@ export function X01GameView({
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
   const [playerEloData, setPlayerEloData] = useState<PlayerEloData[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Can undo if there are throws in current visit OR any player has completed visits
   const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
@@ -115,8 +116,16 @@ export function X01GameView({
 
   // Save each completed leg
   useEffect(() => {
+    // Reset savedLegsRef when game is reset (completedLegs becomes empty)
+    if (state.completedLegs.length === 0 && savedLegsRef.current > 0) {
+      savedLegsRef.current = 0;
+      setPlayerEloData([]);
+      return;
+    }
+    
     const newLegs = state.completedLegs.slice(savedLegsRef.current);
     if (newLegs.length > 0) {
+      setIsSaving(true);
       // Save each new leg and get Elo updates
       (async () => {
         for (const legData of newLegs) {
@@ -128,6 +137,7 @@ export function X01GameView({
           }
         }
         savedLegsRef.current = state.completedLegs.length;
+        setIsSaving(false);
       })();
     }
   }, [state.completedLegs.length, state]);
@@ -269,10 +279,17 @@ export function X01GameView({
         </div>
 
         <button
-          onClick={continueToNextLeg}
-          className="rounded-2xl bg-green-600 px-6 py-6 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+          onClick={async () => {
+            // Wait for any pending save to complete
+            while (isSaving) {
+              await new Promise(resolve => setTimeout(resolve, 50));
+            }
+            continueToNextLeg();
+          }}
+          disabled={isSaving}
+          className="rounded-2xl bg-green-600 px-6 py-6 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Next Leg
+          {isSaving ? "Saving..." : "Next Leg"}
         </button>
       </div>
     );
@@ -395,13 +412,18 @@ export function X01GameView({
             Home
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
+              // Wait for any pending save to complete
+              while (isSaving) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
               reset();
               onPlayAgain();
             }}
-            className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+            disabled={isSaving}
+            className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Play Again
+            {isSaving ? "Saving..." : "Play Again"}
           </button>
         </div>
       </div>

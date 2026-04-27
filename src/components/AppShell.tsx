@@ -37,7 +37,7 @@ export function AppShell() {
     undoHandlerRef.current?.();
   }, []);
 
-  const { boardRunning, resetTracking } = useAutodartsPoller({
+  const { boardRunning, boardStatus, resetTracking } = useAutodartsPoller({
     processThrows: view.screen === "playing",
     onThrowDetected: handleThrow,
     onTakeout: handleTakeout,
@@ -59,6 +59,7 @@ export function AppShell() {
         <header className="flex items-center justify-center border-b-2 border-zinc-200 px-6 py-5 dark:border-zinc-800">
           <BoardControls 
             boardRunning={boardRunning}
+            boardStatus={boardStatus}
             gameId={view.gameId}
             config={view.config}
             onQuit={goHome}
