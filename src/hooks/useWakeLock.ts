@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
  */
 export function useWakeLock() {
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const isRequestingRef = useRef(false);
 
   useEffect(() => {
     // Check if Wake Lock API is supported
@@ -15,21 +16,42 @@ export function useWakeLock() {
     }
 
     async function requestWakeLock() {
+      // Prevent multiple simultaneous requests
+      if (isRequestingRef.current) return;
+      
+      // Only request if page is visible
+      if (document.visibilityState !== "visible") return;
+      
+      // Don't request if we already have an active wake lock
+      if (wakeLockRef.current && !wakeLockRef.current.released) return;
+
+      isRequestingRef.current = true;
+      
       try {
         wakeLockRef.current = await navigator.wakeLock.request("screen");
         console.log("Wake Lock acquired - screen will stay awake");
 
-        // Listen for wake lock release (e.g., if battery is very low)
+        // Listen for wake lock release and re-acquire if still visible
         wakeLockRef.current.addEventListener("release", () => {
-          console.log("Wake Lock released");
+          console.log("Wake Lock released - will re-acquire if page is visible");
+          wakeLockRef.current = null;
+          
+          // Re-acquire wake lock after a short delay if page is still visible
+          setTimeout(() => {
+            if (document.visibilityState === "visible") {
+              requestWakeLock();
+            }
+          }, 100);
         });
       } catch (err) {
         console.error("Failed to acquire Wake Lock:", err);
+      } finally {
+        isRequestingRef.current = false;
       }
     }
 
     async function releaseWakeLock() {
-      if (wakeLockRef.current) {
+      if (wakeLockRef.current && !wakeLockRef.current.released) {
         try {
           await wakeLockRef.current.release();
           wakeLockRef.current = null;
@@ -47,6 +69,9 @@ export function useWakeLock() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         requestWakeLock();
+      } else {
+        // Release when page becomes hidden to save battery
+        releaseWakeLock();
       }
     };
 
