@@ -39,6 +39,7 @@ export interface X01Config {
   baseScore: 301 | 501 | 701;
   outMode: "double" | "straight";
   firstTo: 1 | 2 | 3;
+  eloEnabled: boolean;
 }
 
 export interface X01ThrowRecord {

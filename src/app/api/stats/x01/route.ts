@@ -17,6 +17,7 @@ interface SaveX01Body {
   game: DbX01Game;
   players: DbX01GamePlayer[];
   darts: Omit<DbX01Dart, "id">[];
+  eloEnabled?: boolean;
 }
 
 export async function POST(req: Request) {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     );
   }
 
-  sqliteStatsStore.saveX01Game(body.game, body.players, body.darts);
+  sqliteStatsStore.saveX01Game(body.game, body.players, body.darts, body.eloEnabled ?? false);
   
   // Fetch game players from database to get elo_change values
   const gamePlayersFromDb = sqliteStatsStore.getX01GamePlayers(body.game.id);

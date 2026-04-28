@@ -20,6 +20,7 @@ function X01Config({
   const [baseScore, setBaseScore] = useState<301 | 501 | 701>(301);
   const [outMode, setOutMode] = useState<"double" | "straight">("double");
   const [firstTo, setFirstTo] = useState<1 | 2 | 3>(1);
+  const [eloEnabled, setEloEnabled] = useState(false);
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -37,7 +38,7 @@ function X01Config({
         </div>
         
         <button
-          onClick={() => onContinue({ baseScore, outMode, firstTo })}
+          onClick={() => onContinue({ baseScore, outMode, firstTo, eloEnabled })}
           className="rounded-xl bg-green-600 px-8 py-3 text-lg font-semibold text-white transition-colors hover:bg-green-500"
         >
           Next
@@ -110,6 +111,36 @@ function X01Config({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Elo scoring */}
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xl font-medium text-zinc-500 dark:text-zinc-400">
+            Elo Scoring
+          </p>
+          <button
+            onClick={() => setEloEnabled((v) => !v)}
+            className={`flex items-center gap-4 rounded-2xl border-2 px-10 py-5 text-2xl font-semibold transition-colors ${
+              eloEnabled
+                ? "border-green-600 bg-green-600/10 text-green-600 dark:text-green-400"
+                : "border-zinc-300 bg-zinc-200 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 purple:border-purple-700 purple:bg-purple-700 purple:text-purple-300"
+            }`}
+          >
+            <span
+              className={`flex h-7 w-7 items-center justify-center rounded-md border-2 transition-colors ${
+                eloEnabled
+                  ? "border-green-600 bg-green-600"
+                  : "border-zinc-400 bg-white dark:border-zinc-500 dark:bg-zinc-700"
+              }`}
+            >
+              {eloEnabled && (
+                <svg className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clipRule="evenodd" />
+                </svg>
+              )}
+            </span>
+            Elo game
+          </button>
         </div>
       </div>
     </div>

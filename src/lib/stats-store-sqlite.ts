@@ -150,6 +150,7 @@ export const sqliteStatsStore: StatsStore = {
     game: DbX01Game,
     players: DbX01GamePlayer[],
     darts: Omit<DbX01Dart, "id">[],
+    eloEnabled: boolean = false,
   ) {
     const d = db();
     const insertGame = d.prepare(
@@ -176,34 +177,50 @@ export const sqliteStatsStore: StatsStore = {
         game.winner_id,
       );
       
-      // Calculate Elo changes for 2-player games
+      // Calculate Elo changes when Elo is enabled
       let eloChanges: Map<string, number> = new Map();
-      if (players.length === 2 && game.winner_id) {
-        const player1 = this.getPlayer(players[0].player_id);
-        const player2 = this.getPlayer(players[1].player_id);
-        
-        if (player1 && player2) {
-          const rating1 = player1.elo_rating ?? 1500;
-          const rating2 = player2.elo_rating ?? 1500;
-          
-          const isPlayer1Winner = game.winner_id === players[0].player_id;
-          const { winnerChange, loserChange } = calculateEloChanges(
-            isPlayer1Winner ? rating1 : rating2,
-            isPlayer1Winner ? rating2 : rating1
-          );
-          
-          eloChanges.set(
-            players[0].player_id,
-            isPlayer1Winner ? winnerChange : loserChange
-          );
-          eloChanges.set(
-            players[1].player_id,
-            isPlayer1Winner ? loserChange : winnerChange
-          );
-          
-          // Update player Elo ratings
-          updateElo.run(eloChanges.get(players[0].player_id), players[0].player_id);
-          updateElo.run(eloChanges.get(players[1].player_id), players[1].player_id);
+      if (eloEnabled && players.length >= 2 && game.winner_id) {
+        const winnerPlayer = this.getPlayer(game.winner_id);
+        const losers = players.filter(p => p.player_id !== game.winner_id);
+
+        if (winnerPlayer && losers.length > 0) {
+          const winnerRating = winnerPlayer.elo_rating ?? 1500;
+          const N = losers.length;
+
+          if (N === 1) {
+            // Standard 1v1 Elo
+            const loserPlayer = this.getPlayer(losers[0].player_id);
+            if (loserPlayer) {
+              const { winnerChange, loserChange } = calculateEloChanges(
+                winnerRating,
+                loserPlayer.elo_rating ?? 1500
+              );
+              eloChanges.set(game.winner_id, winnerChange);
+              eloChanges.set(losers[0].player_id, loserChange);
+            }
+          } else {
+            // Multiplayer: winner gains sum of (1v1 winnerChange / N) per loser
+            // Each loser loses their share (same absolute value)
+            let winnerTotal = 0;
+            for (const loser of losers) {
+              const loserPlayer = this.getPlayer(loser.player_id);
+              if (loserPlayer) {
+                const { winnerChange } = calculateEloChanges(
+                  winnerRating,
+                  loserPlayer.elo_rating ?? 1500
+                );
+                const share = Math.round(winnerChange / N);
+                winnerTotal += share;
+                eloChanges.set(loser.player_id, -share);
+              }
+            }
+            eloChanges.set(game.winner_id, winnerTotal);
+          }
+
+          // Update all player ratings
+          for (const [playerId, change] of eloChanges) {
+            updateElo.run(change, playerId);
+          }
         }
       }
       

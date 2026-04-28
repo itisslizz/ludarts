@@ -130,7 +130,7 @@ export function X01GameView({
       (async () => {
         for (const legData of newLegs) {
           try {
-            const eloData = await saveX01Leg(legData, state);
+            const eloData = await saveX01Leg(legData, state, config.eloEnabled ?? false);
             setPlayerEloData(eloData);
           } catch (error) {
             console.error('Failed to save leg:', error);
