@@ -16,6 +16,7 @@ export interface PlayerEloData {
 export async function saveX01Leg(
   legData: X01LegData,
   state: X01State,
+  eloEnabled: boolean = false,
 ): Promise<PlayerEloData[]> {
   const gameId = generateId();
   const now = new Date().toISOString();
@@ -62,7 +63,7 @@ export async function saveX01Leg(
   const response = await fetch("/api/stats/x01", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ game, players, darts }),
+    body: JSON.stringify({ game, players, darts, eloEnabled }),
   });
   
   if (!response.ok) {
