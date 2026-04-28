@@ -238,7 +238,29 @@ function reducer(state: X01State, action: Action): X01State {
       if (state.phase !== "playing") return state;
       if (state.currentVisit.length === 0) return state;
 
-      const visit = state.currentVisit;
+      let visit = state.currentVisit;
+      
+      // If visit has fewer than 3 darts and is not busted, pad with misses
+      const isBusted = visit.some((t) => t.busted);
+      if (!isBusted && visit.length < 3) {
+        const missSegment: Segment = {
+          number: 0,
+          multiplier: 1,
+          name: "miss",
+          bed: "outside",
+        };
+        
+        const missRecord: X01ThrowRecord = {
+          segment: missSegment,
+          points: 0,
+          busted: false,
+        };
+        
+        // Add misses to fill up to 3 darts
+        const missesToAdd = 3 - visit.length;
+        visit = [...visit, ...Array(missesToAdd).fill(missRecord)];
+      }
+
       const nextState = {
         ...state,
         waitingForTakeout: false,

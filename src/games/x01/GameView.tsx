@@ -542,7 +542,7 @@ export function X01GameView({
               className={`flex items-center justify-center rounded-2xl border-3 px-8 py-8 min-h-[120px] ${
                 record.busted
                   ? "bg-red-500/15 border-red-500 text-red-600 dark:text-red-400"
-                  : "bg-zinc-100 border-zinc-300 text-zinc-700 dark:bg-zinc-800 dark:border-zinc-600 dark:text-zinc-300"
+                  : "bg-zinc-100 border-zinc-300 text-zinc-700 dark:bg-zinc-800 dark:border-zinc-400 dark:text-zinc-100"
               }`}
             >
               <span className="text-5xl font-bold">
