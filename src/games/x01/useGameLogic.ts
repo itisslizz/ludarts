@@ -27,6 +27,7 @@ function createInitialState({ config, playerIds }: X01InitArgs): X01State {
     targetScore: config.baseScore,
     outMode: config.outMode,
     firstTo: config.firstTo,
+    eloEnabled: config.eloEnabled,
     playerIds,
     players: playerIds.map((id) => ({
       playerId: id,
@@ -387,6 +388,7 @@ function reducer(state: X01State, action: Action): X01State {
           baseScore: state.targetScore as 301 | 501 | 701,
           outMode: state.outMode,
           firstTo: state.firstTo,
+          eloEnabled: state.eloEnabled,
         },
         playerIds: rotatedPlayerIds,
       });

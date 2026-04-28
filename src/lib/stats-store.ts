@@ -12,6 +12,7 @@ export interface StatsStore {
     game: DbX01Game,
     players: DbX01GamePlayer[],
     darts: Omit<DbX01Dart, "id">[],
+    eloEnabled: boolean,
   ): void;
   getX01GamesForPlayer(playerId: string): DbX01Game[];
   getX01GamePlayers(gameId: string): DbX01GamePlayer[];
