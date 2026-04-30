@@ -86,21 +86,28 @@ export function CricketGameView({
         {/* Final scoreboard */}
         <Scoreboard state={state} playerName={playerName} />
 
-        <div className="flex gap-6">
+        {/* Floating action buttons */}
+        <div className="fixed bottom-6 right-6 flex flex-col gap-3">
           <button
             onClick={onQuit}
-            className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-800"
+            title="Home"
           >
-            Home
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
           </button>
           <button
             onClick={() => {
               reset();
               onPlayAgain();
             }}
-            className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-green-600 shadow-lg transition-all hover:scale-110 hover:bg-green-500 hover:shadow-xl active:bg-green-700"
+            title="Play Again"
           >
-            Play Again
+            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
           </button>
         </div>
       </div>

@@ -42,6 +42,7 @@ export interface PlayerDetailStats {
   tons: number;
   ton40s: number;
   ton80s: number;
+  washmachineCount: number;
   checkoutDetails: CheckoutDetail[];
   pprHistory: { date: string; ppr: number; first9Ppr: number; scoringPpr: number | null }[];
   recentGames: { id: string; targetScore: number; outMode: string; startedAt: string; won: boolean; ppr: number }[];

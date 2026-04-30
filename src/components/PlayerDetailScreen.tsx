@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { DartHeatmap } from "@/components/DartHeatmap";
 import type { PlayerDetailStats } from "@/lib/stats-store";
+import { computeBadges, BADGE_DEFS, type Badge, type BadgeCategory } from "@/lib/badges";
 
 interface PlayerDetailScreenProps {
   playerId: string;
@@ -110,11 +111,15 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
           })}
         </div>
 
+        {/* Floating back button */}
         <button
           onClick={() => setShowCheckouts(false)}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-800"
+          title="Back"
         >
-          Back
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
         </button>
       </div>
     );
@@ -150,11 +155,15 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
           <p className="text-sm text-zinc-400">Not enough games for a chart</p>
         )}
 
+        {/* Floating back button */}
         <button
           onClick={() => setShowPpr(false)}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
+          className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-800"
+          title="Back"
         >
-          Back
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
         </button>
       </div>
     );
@@ -225,6 +234,7 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         <StatCard label="100+" value={String(stats.tons)} />
         <StatCard label="140+" value={String(stats.ton40s)} />
         <StatCard label="180s" value={String(stats.ton80s)} />
+        <StatCard label="26" value={String(stats.washmachineCount)} />
       </div>
 
       {/* Heatmap */}
@@ -267,14 +277,83 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         </div>
       )}
 
-      <div className="flex gap-4">
-        <button
-          onClick={onBack}
-          className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 purple:border-purple-700 purple:hover:bg-purple-900"
-        >
-          Back
-        </button>
+      {/* Achievements */}
+      <div className="w-full max-w-md">
+        <h2 className="mb-3 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+          Achievements
+        </h2>
+        <AchievementsGrid stats={stats} eloRating={player.elo_rating ?? 1500} />
       </div>
+
+      {/* Floating back button */}
+      <button
+        onClick={onBack}
+        className="fixed bottom-6 right-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-800"
+        title="Back"
+      >
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+const CATEGORY_LABELS: Record<BadgeCategory, string> = {
+  milestones: "Milestones",
+  skill: "Skill",
+  scoring: "Scoring",
+  checkout: "Checkout",
+  streaks: "Streaks",
+  ranking: "Ranking",
+};
+
+const CATEGORY_COLORS: Record<BadgeCategory, string> = {
+  milestones: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400",
+  skill: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+  scoring: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  checkout: "bg-green-500/15 text-green-600 dark:text-green-400",
+  streaks: "bg-red-500/15 text-red-600 dark:text-red-400",
+  ranking: "bg-purple-500/15 text-purple-600 dark:text-purple-400",
+};
+
+function AchievementsGrid({ stats, eloRating }: { stats: PlayerDetailStats; eloRating: number }) {
+  const badges = computeBadges(stats, eloRating);
+  const categories = Array.from(new Set(BADGE_DEFS.map((b) => b.category))) as BadgeCategory[];
+
+  return (
+    <div className="flex flex-col gap-4">
+      {categories.map((category) => {
+        const categoryBadges = badges.filter((b) => b.category === category);
+        return (
+          <div key={category}>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+              {CATEGORY_LABELS[category]}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {categoryBadges.map((badge) => (
+                <BadgeCard key={badge.id} badge={badge} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function BadgeCard({ badge }: { badge: Badge }) {
+  const colorClass = badge.earned ? CATEGORY_COLORS[badge.category] : "bg-zinc-100 dark:bg-zinc-800/50 text-zinc-400 dark:text-zinc-600";
+  return (
+    <div
+      className={`flex flex-col items-center rounded-lg px-2 py-3 text-center transition-opacity ${colorClass} ${badge.earned ? "" : "opacity-40"}`}
+      title={badge.description}
+    >
+      <span className={`text-2xl leading-none ${badge.earned ? "" : "grayscale"}`}>{badge.icon}</span>
+      <span className="mt-1 text-xs font-semibold leading-tight">{badge.name}</span>
+      {!badge.earned && (
+        <span className="mt-0.5 text-[10px] leading-tight opacity-70">{badge.description}</span>
+      )}
     </div>
   );
 }
