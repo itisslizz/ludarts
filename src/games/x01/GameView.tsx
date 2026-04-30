@@ -7,6 +7,7 @@ import { saveX01Leg, type PlayerEloData } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import { getCheckoutSuggestion } from "@/lib/checkouts";
+import { computeBadges, type Badge } from "@/lib/badges";
 import type { Segment, X01Config, X01ThrowRecord } from "@/lib/types";
 
 interface X01GameViewProps {
@@ -18,6 +19,26 @@ interface X01GameViewProps {
   onQuit: () => void;
   onPlayAgain: () => void;
   onMount?: () => void;
+}
+
+async function fetchEarnedBadgesForPlayers(ids: string[]): Promise<Record<string, Badge[]>> {
+  const result: Record<string, Badge[]> = {};
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const res = await fetch(`/api/stats/players/${id}`);
+        if (res.ok) {
+          const { player, stats } = await res.json();
+          result[id] = computeBadges(stats, player.elo_rating ?? 1500).filter((b) => b.earned);
+        } else {
+          result[id] = [];
+        }
+      } catch {
+        result[id] = [];
+      }
+    }),
+  );
+  return result;
 }
 
 function ThrowBadge({ record }: { record: X01ThrowRecord }) {
@@ -98,6 +119,8 @@ export function X01GameView({
   const savedLegsRef = useRef(0);
   const [playerEloData, setPlayerEloData] = useState<PlayerEloData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const initialBadgeIdsRef = useRef<Record<string, Set<string>> | null>(null);
+  const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<Array<{ badge: Badge; playerName: string }>>([]);
 
   // Can undo if there are throws in current visit OR any player has completed visits
   const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
@@ -106,13 +129,20 @@ export function X01GameView({
   onTakeout(endTurn);
   onUndo(undo, canUndo);
 
-  // Reset board on mount
+  // Reset board on mount and capture baseline badge state
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true;
       onMount?.();
+      fetchEarnedBadgesForPlayers(playerIds).then((byPlayer) => {
+        const sets: Record<string, Set<string>> = {};
+        for (const id of playerIds) {
+          sets[id] = new Set((byPlayer[id] ?? []).map((b) => b.id));
+        }
+        initialBadgeIdsRef.current = sets;
+      });
     }
-  }, [onMount]);
+  }, [onMount]); // playerIds won't change during a game
 
   // Save each completed leg
   useEffect(() => {
@@ -137,6 +167,23 @@ export function X01GameView({
           }
         }
         savedLegsRef.current = state.completedLegs.length;
+
+        // Diff badge state to surface newly earned achievements
+        if (initialBadgeIdsRef.current) {
+          const byPlayer = await fetchEarnedBadgesForPlayers(playerIds);
+          const newlyEarned: Array<{ badge: Badge; playerName: string }> = [];
+          for (const id of playerIds) {
+            const initialIds = initialBadgeIdsRef.current[id] ?? new Set<string>();
+            for (const badge of byPlayer[id] ?? []) {
+              if (!initialIds.has(badge.id)) {
+                newlyEarned.push({ badge, playerName: allPlayers.find((p) => p.id === id)?.name ?? "Unknown" });
+              }
+            }
+            initialBadgeIdsRef.current[id] = new Set((byPlayer[id] ?? []).map((b) => b.id));
+          }
+          if (newlyEarned.length > 0) setNewlyEarnedBadges(newlyEarned);
+        }
+
         setIsSaving(false);
       })();
     }
@@ -269,6 +316,10 @@ export function X01GameView({
                   <p className="text-base text-zinc-500 dark:text-zinc-400">180s</p>
                 </div>
                 <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.washmachineCount}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">26</p>
+                </div>
+                <div>
                   <p className="text-3xl font-bold tabular-nums">{stats.totalDarts}</p>
                   <p className="text-base text-zinc-500 dark:text-zinc-400">Darts</p>
                 </div>
@@ -278,12 +329,28 @@ export function X01GameView({
           })}
         </div>
 
+        {newlyEarnedBadges.length > 0 && (
+          <div className="flex flex-col gap-3 w-full max-w-2xl">
+            {newlyEarnedBadges.map(({ badge, playerName: name }) => (
+              <div key={badge.id} className="flex items-center gap-4 rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-4">
+                <span className="text-3xl">{badge.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-yellow-600 dark:text-yellow-400">Achievement Unlocked!</p>
+                  <p className="text-lg font-bold">{name} — {badge.name}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{badge.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <button
           onClick={async () => {
             // Wait for any pending save to complete
             while (isSaving) {
               await new Promise(resolve => setTimeout(resolve, 50));
             }
+            setNewlyEarnedBadges([]);
             continueToNextLeg();
           }}
           disabled={isSaving}
@@ -395,6 +462,10 @@ export function X01GameView({
                   <p className="text-base text-zinc-500 dark:text-zinc-400">180s</p>
                 </div>
                 <div>
+                  <p className="text-3xl font-bold tabular-nums">{stats.washmachineCount}</p>
+                  <p className="text-base text-zinc-500 dark:text-zinc-400">26</p>
+                </div>
+                <div>
                   <p className="text-3xl font-bold tabular-nums">{stats.totalDarts}</p>
                   <p className="text-base text-zinc-500 dark:text-zinc-400">Darts</p>
                 </div>
@@ -404,12 +475,31 @@ export function X01GameView({
           })}
         </div>
 
-        <div className="flex gap-6">
+        {newlyEarnedBadges.length > 0 && (
+          <div className="flex flex-col gap-3 w-full max-w-2xl">
+            {newlyEarnedBadges.map(({ badge, playerName: name }) => (
+              <div key={badge.id} className="flex items-center gap-4 rounded-2xl border-2 border-yellow-400 bg-yellow-400/10 px-6 py-4">
+                <span className="text-3xl">{badge.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-yellow-600 dark:text-yellow-400">Achievement Unlocked!</p>
+                  <p className="text-lg font-bold">{name} — {badge.name}</p>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">{badge.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Floating action buttons */}
+        <div className="fixed bottom-6 right-6 flex flex-col gap-3">
           <button
             onClick={onQuit}
-            className="rounded-2xl border-2 border-zinc-300 px-10 py-5 text-xl font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+            className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-zinc-300 bg-white shadow-lg transition-all hover:scale-110 hover:shadow-xl dark:border-zinc-700 dark:bg-zinc-800"
+            title="Home"
           >
-            Home
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
           </button>
           <button
             onClick={async () => {
@@ -417,13 +507,17 @@ export function X01GameView({
               while (isSaving) {
                 await new Promise(resolve => setTimeout(resolve, 50));
               }
+              setNewlyEarnedBadges([]);
               reset();
               onPlayAgain();
             }}
             disabled={isSaving}
-            className="rounded-2xl bg-green-600 px-12 py-5 text-2xl font-semibold text-white transition-colors hover:bg-green-500 active:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-green-600 shadow-lg transition-all hover:scale-110 hover:bg-green-500 hover:shadow-xl active:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Play Again"
           >
-            {isSaving ? "Saving..." : "Play Again"}
+            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
           </button>
         </div>
       </div>

@@ -8,6 +8,7 @@ export interface X01PlayerStats {
   visits100: number;
   visits140: number;
   visits180: number;
+  washmachineCount: number;
   totalDarts: number;
 }
 
@@ -79,11 +80,12 @@ export function computeStats(
       ? `${doublesSuccessful}/${doublesAttempted}`
       : "—";
 
-  // Visit score thresholds (non-busted visits only)
+  // Visit score thresholds and Washmachine count (non-busted visits only)
   let visits60 = 0;
   let visits100 = 0;
   let visits140 = 0;
   let visits180 = 0;
+  let washmachineCount = 0;
 
   for (const visit of visits) {
     if (isBustedVisit(visit)) continue;
@@ -92,6 +94,16 @@ export function computeStats(
     else if (score >= 140) visits140++;
     else if (score >= 100) visits100++;
     else if (score >= 60) visits60++;
+
+    // Washmachine: exactly S20 + S5 + S1 in any order
+    if (
+      visit.length === 3 &&
+      visit.some((t) => t.segment.number === 20 && t.segment.multiplier === 1) &&
+      visit.some((t) => t.segment.number === 5  && t.segment.multiplier === 1) &&
+      visit.some((t) => t.segment.number === 1  && t.segment.multiplier === 1)
+    ) {
+      washmachineCount++;
+    }
   }
 
   return {
@@ -102,6 +114,7 @@ export function computeStats(
     visits100,
     visits140,
     visits180,
+    washmachineCount,
     totalDarts,
   };
 }

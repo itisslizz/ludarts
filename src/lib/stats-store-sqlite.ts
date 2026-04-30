@@ -408,6 +408,29 @@ export const sqliteStatsStore: StatsStore = {
       )
       .get(...dartParams) as { tons: number; ton40s: number; ton80s: number };
 
+    // Washmachine count: visits with exactly S20 + S5 + S1 (any order), not busted
+    const washmachineRow = d
+      .prepare(
+        `SELECT COUNT(*) AS washmachine_count
+         FROM (
+           SELECT
+             game_id, visit_number,
+             MAX(is_bust) AS visit_bust,
+             COUNT(*) AS dart_count,
+             SUM(CASE WHEN segment_number = 20 AND segment_multiplier = 1 THEN 1 ELSE 0 END) AS has_s20,
+             SUM(CASE WHEN segment_number = 5  AND segment_multiplier = 1 THEN 1 ELSE 0 END) AS has_s5,
+             SUM(CASE WHEN segment_number = 1  AND segment_multiplier = 1 THEN 1 ELSE 0 END) AS has_s1
+           FROM x01_darts WHERE player_id = ? ${gameFilter}
+           GROUP BY game_id, visit_number
+         )
+         WHERE visit_bust = 0
+           AND dart_count = 3
+           AND has_s20 = 1
+           AND has_s5 = 1
+           AND has_s1 = 1`,
+      )
+      .get(...dartParams) as { washmachine_count: number };
+
     // First 9 PPR (first 3 visits)
     const first9Row = d
       .prepare(
@@ -580,6 +603,7 @@ export const sqliteStatsStore: StatsStore = {
       tons: bracketRow.tons,
       ton40s: bracketRow.ton40s,
       ton80s: bracketRow.ton80s,
+      washmachineCount: washmachineRow.washmachine_count,
       checkoutDetails,
       pprHistory,
       recentGames: recentGames.map((g) => ({
