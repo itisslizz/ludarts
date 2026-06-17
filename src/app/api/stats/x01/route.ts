@@ -6,7 +6,8 @@ export async function GET(req: Request) {
   const playerId = searchParams.get("playerId");
 
   if (!playerId) {
-    return Response.json({ error: "playerId is required" }, { status: 400 });
+    const legCounts = sqliteStatsStore.getAllPlayerLegCounts();
+    return Response.json(legCounts);
   }
 
   const games = sqliteStatsStore.getX01GamesForPlayer(playerId);
@@ -47,4 +48,14 @@ export async function POST(req: Request) {
   });
   
   return Response.json({ ok: true, players: playerData }, { status: 201 });
+}
+
+export async function DELETE(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const gameId = searchParams.get("gameId");
+  if (!gameId) {
+    return Response.json({ error: "gameId is required" }, { status: 400 });
+  }
+  sqliteStatsStore.deleteX01Game(gameId);
+  return Response.json({ ok: true });
 }

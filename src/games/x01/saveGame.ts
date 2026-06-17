@@ -17,7 +17,7 @@ export async function saveX01Leg(
   legData: X01LegData,
   state: X01State,
   eloEnabled: boolean = false,
-): Promise<PlayerEloData[]> {
+): Promise<{ players: PlayerEloData[]; gameId: string }> {
   const gameId = generateId();
   const now = new Date().toISOString();
 
@@ -71,5 +71,9 @@ export async function saveX01Leg(
   }
   
   const result = await response.json();
-  return result.players || [];
+  return { players: result.players || [], gameId };
+}
+
+export async function deleteX01Leg(gameId: string): Promise<void> {
+  await fetch(`/api/stats/x01?gameId=${encodeURIComponent(gameId)}`, { method: "DELETE" });
 }

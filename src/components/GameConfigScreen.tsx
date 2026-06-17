@@ -20,7 +20,7 @@ function X01Config({
   const [baseScore, setBaseScore] = useState<301 | 501 | 701>(301);
   const [outMode, setOutMode] = useState<"double" | "straight">("double");
   const [firstTo, setFirstTo] = useState<1 | 2 | 3>(1);
-  const [eloEnabled, setEloEnabled] = useState(false);
+  const [eloEnabled, setEloEnabled] = useState(true);
 
   return (
     <div className="flex flex-col h-full w-full">

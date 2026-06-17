@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useX01GameLogic } from "./useGameLogic";
 import { computeStats } from "./stats";
-import { saveX01Leg, type PlayerEloData } from "./saveGame";
+import { saveX01Leg, deleteX01Leg, type PlayerEloData } from "./saveGame";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { ScorePicker } from "@/components/ScorePicker";
 import { getCheckoutSuggestion } from "@/lib/checkouts";
@@ -117,17 +117,30 @@ export function X01GameView({
   const { players: allPlayers } = usePlayerStore();
   const mountedRef = useRef(false);
   const savedLegsRef = useRef(0);
+  const savedGameIdsRef = useRef<string[]>([]);
   const [playerEloData, setPlayerEloData] = useState<PlayerEloData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const initialBadgeIdsRef = useRef<Record<string, Set<string>> | null>(null);
   const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<Array<{ badge: Badge; playerName: string }>>([]);
 
   // Can undo if there are throws in current visit OR any player has completed visits
-  const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0);
+  const canUndo = state.currentVisit.length > 0 || state.players.some(p => p.visits.length > 0)
+    || state.phase === "legComplete" || state.phase === "complete";
+
+  const undoWithRollback = () => {
+    if ((state.phase === "legComplete" || state.phase === "complete") && savedGameIdsRef.current.length > 0) {
+      const gameId = savedGameIdsRef.current[savedGameIdsRef.current.length - 1];
+      savedGameIdsRef.current = savedGameIdsRef.current.slice(0, -1);
+      savedLegsRef.current = Math.max(0, savedLegsRef.current - 1);
+      setPlayerEloData([]);
+      deleteX01Leg(gameId).catch(console.error);
+    }
+    undo();
+  };
 
   onThrowDetected(registerThrow);
   onTakeout(endTurn);
-  onUndo(undo, canUndo);
+  onUndo(undoWithRollback, canUndo);
 
   // Reset board on mount and capture baseline badge state
   useEffect(() => {
@@ -149,10 +162,11 @@ export function X01GameView({
     // Reset savedLegsRef when game is reset (completedLegs becomes empty)
     if (state.completedLegs.length === 0 && savedLegsRef.current > 0) {
       savedLegsRef.current = 0;
+      savedGameIdsRef.current = [];
       setPlayerEloData([]);
       return;
     }
-    
+
     const newLegs = state.completedLegs.slice(savedLegsRef.current);
     if (newLegs.length > 0) {
       setIsSaving(true);
@@ -160,8 +174,9 @@ export function X01GameView({
       (async () => {
         for (const legData of newLegs) {
           try {
-            const eloData = await saveX01Leg(legData, state, config.eloEnabled ?? false);
-            setPlayerEloData(eloData);
+            const result = await saveX01Leg(legData, state, config.eloEnabled ?? false);
+            setPlayerEloData(result.players);
+            savedGameIdsRef.current = [...savedGameIdsRef.current, result.gameId];
           } catch (error) {
             console.error('Failed to save leg:', error);
           }

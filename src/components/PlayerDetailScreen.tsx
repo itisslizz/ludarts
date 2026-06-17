@@ -234,6 +234,8 @@ export function PlayerDetailScreen({ playerId, onBack }: PlayerDetailScreenProps
         <StatCard label="100+" value={String(stats.tons)} />
         <StatCard label="140+" value={String(stats.ton40s)} />
         <StatCard label="180s" value={String(stats.ton80s)} />
+        <StatCard label="Best Checkout" value={stats.highestCheckout != null ? String(stats.highestCheckout) : "—"} />
+        <StatCard label="100+ Checkouts" value={String(stats.checkouts100Plus)} />
         <StatCard label="26" value={String(stats.washmachineCount)} />
       </div>
 

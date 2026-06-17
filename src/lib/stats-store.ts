@@ -1,5 +1,16 @@
 import type { DbPlayer, DbX01Game, DbX01Dart, DbX01GamePlayer } from "./types";
 
+export interface LeaderboardEntry {
+  playerId: string;
+  name: string;
+  eloRating: number;
+  legsPlayed: number;
+  legsWon: number;
+  legsLost: number;
+  highestCheckout: number | null;
+  checkouts100Plus: number;
+}
+
 export interface StatsStore {
   // Players
   getPlayers(): DbPlayer[];
@@ -17,10 +28,13 @@ export interface StatsStore {
   getX01GamesForPlayer(playerId: string): DbX01Game[];
   getX01GamePlayers(gameId: string): DbX01GamePlayer[];
   getX01DartsForGame(gameId: string): DbX01Dart[];
+  deleteX01Game(gameId: string): void;
+  getAllPlayerLegCounts(): Record<string, number>;
 
   // Stats
   getPlayerX01Stats(playerId: string): { ppr: number | null; winRate: number | null; legsPlayed: number };
   getPlayerDetailStats(playerId: string, gameLimit?: number): PlayerDetailStats;
+  getLeaderboardStats(): LeaderboardEntry[];
   clearAllStats(): void;
 }
 
@@ -42,6 +56,8 @@ export interface PlayerDetailStats {
   tons: number;
   ton40s: number;
   ton80s: number;
+  highestCheckout: number | null;
+  checkouts100Plus: number;
   washmachineCount: number;
   checkoutDetails: CheckoutDetail[];
   pprHistory: { date: string; ppr: number; first9Ppr: number; scoringPpr: number | null }[];
