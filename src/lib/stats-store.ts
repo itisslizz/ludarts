@@ -23,6 +23,7 @@ export interface StatsStore {
     game: DbX01Game,
     players: DbX01GamePlayer[],
     darts: Omit<DbX01Dart, "id">[],
+    eloEnabled: boolean,
   ): void;
   getX01GamesForPlayer(playerId: string): DbX01Game[];
   getX01GamePlayers(gameId: string): DbX01GamePlayer[];
@@ -57,6 +58,7 @@ export interface PlayerDetailStats {
   ton80s: number;
   highestCheckout: number | null;
   checkouts100Plus: number;
+  washmachineCount: number;
   checkoutDetails: CheckoutDetail[];
   pprHistory: { date: string; ppr: number; first9Ppr: number; scoringPpr: number | null }[];
   recentGames: { id: string; targetScore: number; outMode: string; startedAt: string; won: boolean; ppr: number }[];

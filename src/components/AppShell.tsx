@@ -18,8 +18,8 @@ export function AppShell() {
   const { view, goHome, goPlayers, goLeaderboard, goPlayerDetail, selectGame, configureGame, startGame } =
     useAppNavigation();
 
-  // Keep screen awake on mobile devices
-  useWakeLock();
+  // Keep screen awake only during active gameplay
+  useWakeLock(view.screen === "playing");
 
   const throwHandlerRef = useRef<((segment: Segment, coords?: { x: number; y: number }) => void) | null>(null);
   const takeoutHandlerRef = useRef<(() => void) | null>(null);

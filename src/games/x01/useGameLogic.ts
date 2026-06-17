@@ -27,6 +27,7 @@ function createInitialState({ config, playerIds }: X01InitArgs): X01State {
     targetScore: config.baseScore,
     outMode: config.outMode,
     firstTo: config.firstTo,
+    eloEnabled: config.eloEnabled,
     playerIds,
     players: playerIds.map((id) => ({
       playerId: id,
@@ -213,11 +214,7 @@ function reducer(state: X01State, action: Action): X01State {
       if (isVisitEnd) {
         return {
           ...state,
-          players: updatedPlayers.map((p, i) =>
-            i === state.currentPlayerIndex
-              ? { ...p, scoreAtVisitStart: newScore }
-              : p,
-          ),
+          players: updatedPlayers,
           throwCount: state.throwCount + 1,
           currentVisit: visit,
           busted: false,
@@ -312,14 +309,15 @@ function reducer(state: X01State, action: Action): X01State {
 
       // If there are throws in the current visit, undo the last one
       if (state.currentVisit.length > 0) {
-        const lastThrow = state.currentVisit[state.currentVisit.length - 1];
         const cp = state.players[state.currentPlayerIndex];
-
-        // Restore the player's score (add back the points if it wasn't busted)
-        const restoredScore = lastThrow.busted ? cp.score : cp.score + lastThrow.points;
+        
+        // Calculate the restored score from scoreAtVisitStart minus remaining throws
+        // This correctly handles undoing busted throws that occurred after other throws
+        const remainingVisit = state.currentVisit.slice(0, -1);
+        const pointsScored = remainingVisit.reduce((sum, t) => sum + t.points, 0);
+        const restoredScore = cp.scoreAtVisitStart - pointsScored;
 
         // Check if we're un-busting: if the remaining visit has no busted throws
-        const remainingVisit = state.currentVisit.slice(0, -1);
         const stillBusted = remainingVisit.some((t) => t.busted);
 
         return {
@@ -422,6 +420,7 @@ function reducer(state: X01State, action: Action): X01State {
           baseScore: state.targetScore as 301 | 501 | 701,
           outMode: state.outMode,
           firstTo: state.firstTo,
+          eloEnabled: state.eloEnabled,
         },
         playerIds: rotatedPlayerIds,
       });

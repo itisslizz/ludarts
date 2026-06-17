@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
+import { BADGE_DEFS } from "@/lib/badges";
 
 interface PlayerStats {
   ppr: number | null;
   winRate: number | null;
   legsPlayed: number;
+  topBadgeIds: string[];
 }
 
 interface PlayersScreenProps {
@@ -92,26 +94,40 @@ export function PlayersScreen({ onBack, onSelectPlayer }: PlayersScreenProps) {
                   )}
                 </div>
                 {s && s.legsPlayed > 0 ? (
-                  <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400 purple:text-purple-400">
-                    <span>
-                      PPR{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
-                        {s.ppr != null ? s.ppr.toFixed(1) : "—"}
+                  <>
+                    <div className="mt-2 flex gap-6 text-base text-zinc-500 dark:text-zinc-400 purple:text-purple-400">
+                      <span>
+                        PPR{" "}
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
+                          {s.ppr != null ? s.ppr.toFixed(1) : "—"}
+                        </span>
                       </span>
-                    </span>
-                    <span>
-                      Win rate{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
-                        {s.winRate != null ? `${s.winRate.toFixed(0)}%` : "—"}
+                      <span>
+                        Win rate{" "}
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
+                          {s.winRate != null ? `${s.winRate.toFixed(0)}%` : "—"}
+                        </span>
                       </span>
-                    </span>
-                    <span>
-                      Legs{" "}
-                      <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
-                        {s.legsPlayed}
+                      <span>
+                        Legs{" "}
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-200 purple:text-purple-200">
+                          {s.legsPlayed}
+                        </span>
                       </span>
-                    </span>
-                  </div>
+                    </div>
+                    {s.topBadgeIds.length > 0 && (
+                      <div className="mt-2 flex items-center gap-1">
+                        {s.topBadgeIds.map((id) => {
+                          const def = BADGE_DEFS.find((b) => b.id === id);
+                          return def ? (
+                            <span key={id} title={def.name} className="text-xl leading-none">
+                              {def.icon}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <p className="mt-2 text-base text-zinc-400 dark:text-zinc-500 purple:text-purple-400">
                     No legs played

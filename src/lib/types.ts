@@ -83,6 +83,7 @@ export interface X01State {
   winnerId: string | null;
   currentLeg: number;
   completedLegs: X01LegData[];
+  eloEnabled: boolean;
 }
 
 // --- Cricket (standard + hammer) ---
