@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePlayerStore } from "@/hooks/usePlayerStore";
 import { getGame } from "@/lib/games";
 
@@ -181,6 +181,18 @@ export function PlayerSelectScreen({
   const [touchStartPos, setTouchStartPos] = useState<{ x: number; y: number } | null>(null);
 
   const isSingleSelect = game?.maxPlayers === 1;
+  const [legCounts, setLegCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/stats/x01")
+      .then(r => r.json())
+      .then(setLegCounts)
+      .catch(() => {});
+  }, []);
+
+  const FREQUENT_THRESHOLD = 50;
+  const frequentPlayers = players.filter(p => (legCounts[p.id] ?? 0) > FREQUENT_THRESHOLD);
+  const otherPlayers = players.filter(p => (legCounts[p.id] ?? 0) <= FREQUENT_THRESHOLD);
 
   function togglePlayer(id: string) {
     if (selectedPlayerIds.includes(id)) {
@@ -399,28 +411,50 @@ export function PlayerSelectScreen({
         </div>
       </div>
 
-      {/* All Players Row (Bottom) */}
+      {/* Players Row (Bottom) */}
       <div className="flex-shrink-0 border-t-2 border-zinc-200 bg-zinc-100/80 dark:border-zinc-800 dark:bg-zinc-900/80 purple:border-purple-900 purple:bg-purple-950/80 px-8 py-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-xl font-semibold text-center mb-4 text-zinc-700 purple:text-zinc-300  dark:text-zinc-300">
-            All Players
-          </h2>
-          
+        <div className="max-w-6xl mx-auto flex flex-col gap-6">
           {players.length === 0 ? (
             <p className="text-center text-lg text-zinc-400 dark:text-zinc-500 py-8">
               No players yet. Add one above to get started.
             </p>
           ) : (
-            <div className="flex justify-center items-center gap-8 flex-wrap">
-              {players.map((player) => (
-                <PlayerCircle
-                  key={player.id}
-                  player={player}
-                  isSelected={selectedPlayerIds.includes(player.id)}
-                  onClick={() => togglePlayer(player.id)}
-                />
-              ))}
-            </div>
+            <>
+              {frequentPlayers.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-center mb-4 text-zinc-700 dark:text-zinc-300 purple:text-zinc-300">
+                    Regulars
+                  </h2>
+                  <div className="flex justify-center items-center gap-8 flex-wrap">
+                    {frequentPlayers.map((player) => (
+                      <PlayerCircle
+                        key={player.id}
+                        player={player}
+                        isSelected={selectedPlayerIds.includes(player.id)}
+                        onClick={() => togglePlayer(player.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {otherPlayers.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-semibold text-center mb-4 text-zinc-700 dark:text-zinc-300 purple:text-zinc-300">
+                    {frequentPlayers.length > 0 ? "Others" : "Players"}
+                  </h2>
+                  <div className="flex justify-center items-center gap-8 flex-wrap">
+                    {otherPlayers.map((player) => (
+                      <PlayerCircle
+                        key={player.id}
+                        player={player}
+                        isSelected={selectedPlayerIds.includes(player.id)}
+                        onClick={() => togglePlayer(player.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
