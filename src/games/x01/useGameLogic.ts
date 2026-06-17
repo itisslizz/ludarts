@@ -275,6 +275,41 @@ function reducer(state: X01State, action: Action): X01State {
 
     case "UNDO": {
 
+      // If the leg/match just completed, undo the winning visit entirely
+      if (state.phase === "legComplete" || state.phase === "complete") {
+        const lastLeg = state.completedLegs[state.completedLegs.length - 1];
+        if (!lastLeg) return state;
+
+        const winnerIndex = state.players.findIndex(p => p.playerId === lastLeg.winnerId);
+        if (winnerIndex === -1) return state;
+
+        const winner = state.players[winnerIndex];
+        const winningVisit = winner.visits[winner.visits.length - 1];
+        if (!winningVisit) return state;
+
+        return {
+          ...state,
+          phase: "playing",
+          currentPlayerIndex: winnerIndex,
+          players: state.players.map((p, i) =>
+            i === winnerIndex
+              ? {
+                  ...p,
+                  score: winner.scoreAtVisitStart,
+                  visits: p.visits.slice(0, -1),
+                  legsWon: p.legsWon - 1,
+                }
+              : p,
+          ),
+          currentVisit: winningVisit,
+          throwCount: state.throwCount - winningVisit.length,
+          busted: false,
+          waitingForTakeout: winningVisit.length >= 3,
+          winnerId: null,
+          completedLegs: state.completedLegs.slice(0, -1),
+        };
+      }
+
       // If there are throws in the current visit, undo the last one
       if (state.currentVisit.length > 0) {
         const lastThrow = state.currentVisit[state.currentVisit.length - 1];

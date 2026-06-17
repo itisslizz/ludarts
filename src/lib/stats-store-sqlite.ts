@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
-import type { StatsStore, PlayerDetailStats } from "./stats-store";
+import type { StatsStore, PlayerDetailStats, LeaderboardEntry } from "./stats-store";
 import type { DbPlayer, DbX01Game, DbX01Dart, DbX01GamePlayer } from "./types";
 
 const DB_PATH = path.join(process.cwd(), "data", "autodarts.db");
@@ -566,6 +566,36 @@ export const sqliteStatsStore: StatsStore = {
       totalCheckoutMade += entry.made;
     }
 
+    const checkoutStatsRow = d.prepare(`
+      WITH
+      visit_totals AS (
+        SELECT game_id, visit_number,
+          SUM(score) AS visit_total,
+          MAX(is_bust) AS is_bust
+        FROM x01_darts
+        WHERE player_id = ?
+        GROUP BY game_id, visit_number
+      ),
+      checkouts AS (
+        SELECT
+          g.target_score - COALESCE((
+            SELECT SUM(CASE WHEN vt.is_bust = 0 THEN vt.visit_total ELSE 0 END)
+            FROM visit_totals vt
+            WHERE vt.game_id = g.id
+              AND vt.visit_number < (
+                SELECT MAX(vt2.visit_number) FROM visit_totals vt2 WHERE vt2.game_id = g.id
+              )
+          ), 0) AS checkout_score
+        FROM x01_games g
+        WHERE g.winner_id = ? ${gameFilterForGames}
+      )
+      SELECT
+        MAX(checkout_score) AS highest_checkout,
+        COUNT(CASE WHEN checkout_score >= 100 THEN 1 END) AS checkouts_100_plus
+      FROM checkouts
+    `).get(...([playerId, playerId, ...(gameLimit ? [playerId] : [])])) as
+      { highest_checkout: number | null; checkouts_100_plus: number } | undefined;
+
     return {
       ppr: pprRow?.ppr ?? null,
       first9Ppr: first9Row?.ppr ?? null,
@@ -580,6 +610,8 @@ export const sqliteStatsStore: StatsStore = {
       tons: bracketRow.tons,
       ton40s: bracketRow.ton40s,
       ton80s: bracketRow.ton80s,
+      highestCheckout: checkoutStatsRow?.highest_checkout ?? null,
+      checkouts100Plus: checkoutStatsRow?.checkouts_100_plus ?? 0,
       checkoutDetails,
       pprHistory,
       recentGames: recentGames.map((g) => ({
@@ -592,6 +624,109 @@ export const sqliteStatsStore: StatsStore = {
       })),
       darts,
     };
+  },
+
+  deleteX01Game(gameId: string) {
+    const d = db();
+    const tx = d.transaction(() => {
+      const gamePlayers = d.prepare("SELECT * FROM x01_game_players WHERE game_id = ?").all(gameId) as DbX01GamePlayer[];
+      for (const gp of gamePlayers) {
+        if (gp.elo_change !== null && gp.elo_change !== 0) {
+          d.prepare("UPDATE players SET elo_rating = elo_rating - ? WHERE id = ?").run(gp.elo_change, gp.player_id);
+        }
+      }
+      d.prepare("DELETE FROM x01_darts WHERE game_id = ?").run(gameId);
+      d.prepare("DELETE FROM x01_game_players WHERE game_id = ?").run(gameId);
+      d.prepare("DELETE FROM x01_games WHERE id = ?").run(gameId);
+    });
+    tx();
+  },
+
+  getAllPlayerLegCounts(): Record<string, number> {
+    const rows = db()
+      .prepare("SELECT player_id, COUNT(*) as legs_played FROM x01_game_players GROUP BY player_id")
+      .all() as { player_id: string; legs_played: number }[];
+    return Object.fromEntries(rows.map(r => [r.player_id, r.legs_played]));
+  },
+
+  getLeaderboardStats(): LeaderboardEntry[] {
+    const rows = db().prepare(`
+      WITH
+      visit_totals AS (
+        SELECT game_id, player_id, visit_number,
+          SUM(score) AS visit_total,
+          MAX(is_bust) AS is_bust
+        FROM x01_darts
+        GROUP BY game_id, player_id, visit_number
+      ),
+      checkouts AS (
+        SELECT
+          g.id AS game_id,
+          g.winner_id AS player_id,
+          g.target_score - COALESCE((
+            SELECT SUM(CASE WHEN vt.is_bust = 0 THEN vt.visit_total ELSE 0 END)
+            FROM visit_totals vt
+            WHERE vt.game_id = g.id
+              AND vt.player_id = g.winner_id
+              AND vt.visit_number < (
+                SELECT MAX(vt2.visit_number)
+                FROM visit_totals vt2
+                WHERE vt2.game_id = g.id AND vt2.player_id = g.winner_id
+              )
+          ), 0) AS checkout_score
+        FROM x01_games g
+        WHERE g.winner_id IS NOT NULL
+      ),
+      checkout_stats AS (
+        SELECT player_id,
+          MAX(checkout_score) AS highest_checkout,
+          COUNT(CASE WHEN checkout_score >= 100 THEN 1 END) AS checkouts_100_plus
+        FROM checkouts
+        GROUP BY player_id
+      ),
+      leg_stats AS (
+        SELECT gp.player_id,
+          COUNT(*) AS legs_played,
+          COUNT(CASE WHEN g.winner_id = gp.player_id THEN 1 END) AS legs_won
+        FROM x01_game_players gp
+        JOIN x01_games g ON g.id = gp.game_id
+        GROUP BY gp.player_id
+      )
+      SELECT
+        p.id AS player_id,
+        p.name,
+        p.elo_rating,
+        COALESCE(ls.legs_played, 0) AS legs_played,
+        COALESCE(ls.legs_won, 0) AS legs_won,
+        COALESCE(ls.legs_played, 0) - COALESCE(ls.legs_won, 0) AS legs_lost,
+        cs.highest_checkout,
+        COALESCE(cs.checkouts_100_plus, 0) AS checkouts_100_plus
+      FROM players p
+      LEFT JOIN leg_stats ls ON ls.player_id = p.id
+      LEFT JOIN checkout_stats cs ON cs.player_id = p.id
+      WHERE COALESCE(ls.legs_played, 0) >= 50
+      ORDER BY p.elo_rating DESC
+    `).all() as {
+      player_id: string;
+      name: string;
+      elo_rating: number;
+      legs_played: number;
+      legs_won: number;
+      legs_lost: number;
+      highest_checkout: number | null;
+      checkouts_100_plus: number;
+    }[];
+
+    return rows.map(r => ({
+      playerId: r.player_id,
+      name: r.name,
+      eloRating: r.elo_rating,
+      legsPlayed: r.legs_played,
+      legsWon: r.legs_won,
+      legsLost: r.legs_lost,
+      highestCheckout: r.highest_checkout,
+      checkouts100Plus: r.checkouts_100_plus,
+    }));
   },
 
   clearAllStats() {
