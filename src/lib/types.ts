@@ -170,6 +170,7 @@ export type GameConfig = Record<string, unknown>;
 export type AppView =
   | { screen: "home" }
   | { screen: "players" }
+  | { screen: "leaderboard" }
   | { screen: "player-detail"; playerId: string }
   | { screen: "game-config"; gameId: string }
   | { screen: "player-select"; gameId: string; config: GameConfig }

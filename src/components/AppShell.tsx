@@ -11,10 +11,11 @@ import { PlayerSelectScreen } from "@/components/PlayerSelectScreen";
 import { GameScreen } from "@/components/GameScreen";
 import { PlayersScreen } from "@/components/PlayersScreen";
 import { PlayerDetailScreen } from "@/components/PlayerDetailScreen";
+import { LeaderboardScreen } from "@/components/LeaderboardScreen";
 import type { Segment } from "@/lib/types";
 
 export function AppShell() {
-  const { view, goHome, goPlayers, goPlayerDetail, selectGame, configureGame, startGame } =
+  const { view, goHome, goPlayers, goLeaderboard, goPlayerDetail, selectGame, configureGame, startGame } =
     useAppNavigation();
 
   // Keep screen awake on mobile devices
@@ -71,7 +72,11 @@ export function AppShell() {
 
       <main className="flex flex-1 flex-col">
         {view.screen === "home" && (
-          <HomeScreen onSelectGame={selectGame} onManagePlayers={goPlayers} />
+          <HomeScreen onSelectGame={selectGame} onManagePlayers={goPlayers} onLeaderboard={goLeaderboard} />
+        )}
+
+        {view.screen === "leaderboard" && (
+          <LeaderboardScreen onBack={goHome} />
         )}
 
         {view.screen === "players" && (

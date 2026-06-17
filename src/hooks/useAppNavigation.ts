@@ -9,6 +9,7 @@ export function useAppNavigation() {
 
   const goHome = useCallback(() => setView({ screen: "home" }), []);
   const goPlayers = useCallback(() => setView({ screen: "players" }), []);
+  const goLeaderboard = useCallback(() => setView({ screen: "leaderboard" }), []);
   const goPlayerDetail = useCallback(
     (playerId: string) => setView({ screen: "player-detail", playerId }),
     [],
@@ -35,5 +36,5 @@ export function useAppNavigation() {
     [],
   );
 
-  return { view, goHome, goPlayers, goPlayerDetail, selectGame, configureGame, startGame };
+  return { view, goHome, goPlayers, goLeaderboard, goPlayerDetail, selectGame, configureGame, startGame };
 }
